@@ -56,7 +56,7 @@ export function GroupCard({ group, onDrop, onDelete, onRename, translations }: G
   const countText = group.countries.length === 1 ? translations.team : translations.teams;
 
   return (
-    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20 shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02] flex flex-col gap-3">
+    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-3 md:p-4 border border-white/20 shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02] flex flex-col gap-2 md:gap-3">
       {/* Header */}
       <div className="flex justify-between items-center gap-2">
         {isEditing ? (
@@ -68,23 +68,23 @@ export function GroupCard({ group, onDrop, onDelete, onRename, translations }: G
               onKeyDown={handleKeyDown}
               onBlur={handleSaveEdit}
               autoFocus
-              className="flex-1 bg-white/20 border border-yellow-400 rounded-lg px-3 py-1.5 text-sm outline-none text-white placeholder:text-white/50"
+              className="flex-1 bg-white/20 border border-yellow-400 rounded-lg px-2 md:px-3 py-1.5 text-sm outline-none text-white placeholder:text-white/50"
             />
             <button
               onClick={handleSaveEdit}
-              className="text-green-400 hover:text-green-300 bg-white/10 rounded-lg p-1.5 hover:bg-white/20 transition-all"
+              className="text-green-400 hover:text-green-300 bg-white/10 rounded-lg p-1.5 hover:bg-white/20 transition-all flex-shrink-0"
               title={translations.validate}
             >
               <Check size={16} />
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2 group cursor-pointer flex-1" onClick={handleStartEdit}>
-            <div className="text-lg">{group.name}</div>
-            <Pencil size={16} className="opacity-0 group-hover:opacity-100 text-yellow-300 transition-opacity" />
+          <div className="flex items-center gap-2 group cursor-pointer flex-1 min-w-0" onClick={handleStartEdit}>
+            <div className="text-base md:text-lg truncate">{group.name}</div>
+            <Pencil size={14} className="opacity-0 group-hover:opacity-100 text-yellow-300 transition-opacity flex-shrink-0" />
           </div>
         )}
-        <div className="text-xs px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg">
+        <div className="text-xs px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg flex-shrink-0 whitespace-nowrap">
           {group.countries.length} {countText}
         </div>
       </div>
@@ -92,14 +92,14 @@ export function GroupCard({ group, onDrop, onDelete, onRename, translations }: G
       {/* Drop Zone */}
       <div
         ref={drop}
-        className={`rounded-xl border-2 border-dashed p-3 min-h-[80px] flex flex-col gap-2 transition-all ${
+        className={`rounded-xl border-2 border-dashed p-2 md:p-3 min-h-[60px] md:min-h-[80px] flex flex-col gap-2 transition-all ${
           isOver
             ? 'border-yellow-400 bg-yellow-400/20 shadow-lg shadow-yellow-400/20'
             : 'border-white/30 bg-white/5'
         }`}
       >
         {group.countries.length === 0 ? (
-          <div className="text-center text-white/40 text-sm py-4">
+          <div className="text-center text-white/40 text-xs md:text-sm py-3 md:py-4">
             {translations.dropHere}
           </div>
         ) : (

@@ -1132,11 +1132,11 @@ function App() {
         <AdSpace position="left" ads={ads} />
         <AdSpace position="right" ads={ads} />
 
-        <div className="max-w-7xl mx-auto space-y-6">
+        <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-6">
           {/* Header */}
-          <div className="relative text-center space-y-4 py-8">
+          <div className="relative text-center space-y-4 py-4 sm:py-8">
             {/* Top right controls */}
-            <div className="absolute top-0 right-0 flex items-center gap-3">
+            <div className="absolute top-0 right-0 flex flex-wrap items-center gap-2 sm:gap-3">
               {/* Authentication buttons */}
               {!isAuthenticated ? (
                 <>
@@ -1145,7 +1145,7 @@ function App() {
                       setAuthMode("login");
                       setShowAuthModal(true);
                     }}
-                    className="px-4 py-2.5 bg-white/15 backdrop-blur-lg rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl text-sm font-medium"
+                    className="px-3 sm:px-4 py-2 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl text-xs sm:text-sm font-medium"
                   >
                     {t.login}
                   </button>
@@ -1154,7 +1154,7 @@ function App() {
                       setAuthMode("signup");
                       setShowAuthModal(true);
                     }}
-                    className="px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-xl transition-all shadow-lg hover:shadow-xl text-sm font-medium"
+                    className="px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-xl transition-all shadow-lg hover:shadow-xl text-xs sm:text-sm font-medium"
                   >
                     {t.signup}
                   </button>
@@ -1192,10 +1192,11 @@ function App() {
                   onClick={() =>
                     setShowLanguageMenu(!showLanguageMenu)
                   }
-                  className="flex items-center gap-2 px-4 py-2.5 bg-white/15 backdrop-blur-lg rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl"
+                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl"
                 >
-                  <Globe size={18} />
-                  <span className="text-sm">
+                  <Globe size={16} className="sm:hidden" />
+                  <Globe size={18} className="hidden sm:block" />
+                  <span className="text-xs sm:text-sm">
                     {languageNames[language]}
                   </span>
                 </button>
@@ -1224,16 +1225,17 @@ function App() {
             </div>
 
             {/* Logo and Title */}
-            <div className="inline-flex items-center gap-4">
-              <Logo size={64} className="drop-shadow-2xl" />
+            <div className="inline-flex items-center gap-2 sm:gap-4">
+              <Logo size={64} className="drop-shadow-2xl hidden md:block" />
+              <Logo size={48} className="drop-shadow-2xl md:hidden" />
               <div>
-                <h1 className="text-5xl bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text text-transparent drop-shadow-lg">
+                <h1 className="text-2xl sm:text-3xl md:text-5xl bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text text-transparent drop-shadow-lg">
                   {t.appName}
                 </h1>
                 <div className="h-1 bg-gradient-to-r from-transparent via-yellow-300 to-transparent opacity-40 mt-2"></div>
               </div>
             </div>
-            <p className="text-lg text-white/90 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg text-white/90 max-w-2xl mx-auto px-4">
               {t.tagline}
             </p>
           </div>
@@ -1286,15 +1288,15 @@ function App() {
           )}
 
           {/* Settings Panel */}
-          <section className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/20">
+          <section className="bg-white/10 backdrop-blur-xl rounded-3xl p-4 sm:p-6 shadow-2xl border border-white/20">
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-2xl shadow-lg">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
                 ⚙️
               </div>
-              <h2 className="text-2xl">{t.creation}</h2>
+              <h2 className="text-xl sm:text-2xl">{t.creation}</h2>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
               {/* Group Form */}
               <form
                 onSubmit={handleAddGroup}
@@ -1432,10 +1434,10 @@ function App() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                 <button
                   onClick={handleSaveCurrentProject}
-                  className="px-8 py-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                  className="px-6 sm:px-8 py-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
                   <Save size={20} />
                   <span>
@@ -1445,7 +1447,7 @@ function App() {
                 {currentProjectId && (
                   <button
                     onClick={() => setShowShareModal(true)}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                    className="px-4 sm:px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
                     title={t.shareProject}
                   >
                     🔗 {t.shareProject}
@@ -1458,26 +1460,28 @@ function App() {
           {/* Random Draw Button */}
           {unassignedCountries.length > 0 &&
             groups.length > 0 && (
-              <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-green-400/30">
+              <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-xl rounded-3xl p-4 sm:p-6 shadow-2xl border border-green-400/30">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-2xl shadow-lg">
-                      <Shuffle size={24} />
+                  <div className="flex items-center gap-3 sm:gap-4 w-full md:w-auto">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg flex-shrink-0">
+                      <Shuffle size={20} className="sm:hidden" />
+                      <Shuffle size={24} className="hidden sm:block" />
                     </div>
-                    <div>
-                      <h3 className="text-xl">
+                    <div className="flex-1">
+                      <h3 className="text-lg sm:text-xl">
                         {t.randomDraw}
                       </h3>
-                      <p className="text-sm text-white/70">
+                      <p className="text-xs sm:text-sm text-white/70">
                         {t.randomDrawDesc}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={handleRandomDraw}
-                    className="px-8 py-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                    className="w-full md:w-auto px-6 sm:px-8 py-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
                   >
-                    <Shuffle size={20} />
+                    <Shuffle size={18} className="sm:hidden" />
+                    <Shuffle size={20} className="hidden sm:block" />
                     <span>{t.randomDraw}</span>
                   </button>
                 </div>
@@ -1485,7 +1489,7 @@ function App() {
             )}
 
           {/* Main Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr] gap-4 sm:gap-6 items-start">
             {/* Unassigned Countries */}
             <UnassignedZone
               countries={unassignedCountries}
@@ -1497,12 +1501,12 @@ function App() {
             />
 
             {/* Groups */}
-            <section className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/20 min-h-[300px]">
+            <section className="bg-white/10 backdrop-blur-xl rounded-3xl p-4 sm:p-6 shadow-2xl border border-white/20 min-h-[300px]">
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-2xl shadow-lg">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
                   🧩
                 </div>
-                <h2 className="text-2xl">{t.myGroups}</h2>
+                <h2 className="text-xl sm:text-2xl">{t.myGroups}</h2>
               </div>
 
               {groups.length === 0 ? (

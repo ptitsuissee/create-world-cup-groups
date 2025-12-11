@@ -200,3 +200,76 @@ html {
     transform: translate(-50%, 0);
   }
 }
+
+/* ===================================
+   RESPONSIVE MOBILE & TABLET STYLES
+   =================================== */
+
+/* Base font size adjustments for mobile */
+@media (max-width: 768px) {
+  :root {
+    --font-size: 14px; /* Smaller base font for mobile */
+  }
+}
+
+/* Prevent horizontal scroll on mobile */
+@layer base {
+  html {
+    overflow-x: hidden;
+  }
+
+  body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+}
+
+/* Mobile-friendly touch targets */
+@media (max-width: 768px) {
+  button, a, input[type="button"], input[type="submit"] {
+    min-height: 44px; /* iOS recommended touch target */
+    min-width: 44px;
+  }
+}
+
+/* Hide overflow for mobile devices */
+@media (max-width: 640px) {
+  .container {
+    overflow-x: hidden;
+  }
+}
+
+/* Utility classes for responsive design */
+@layer utilities {
+  .touch-action-none {
+    touch-action: none;
+  }
+
+  .touch-action-pan-y {
+    touch-action: pan-y;
+  }
+
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Mobile-optimized scrolling */
+@layer base {
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Improve text rendering on mobile */
+@media (max-width: 768px) {
+  body {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

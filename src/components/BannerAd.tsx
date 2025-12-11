@@ -22,15 +22,16 @@ export function BannerAd({ ads, position }: BannerAdProps) {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto my-4 px-4">
-      <div className="relative bg-gradient-to-r from-purple-500/10 to-pink-500/10 backdrop-blur-lg rounded-2xl border border-white/20 shadow-lg overflow-hidden group hover:shadow-xl transition-all">
+    <div className="w-full max-w-6xl mx-auto my-3 md:my-4 px-3 md:px-4">
+      <div className="relative bg-gradient-to-r from-purple-500/10 to-pink-500/10 backdrop-blur-lg rounded-xl md:rounded-2xl border border-white/20 shadow-lg overflow-hidden group hover:shadow-xl transition-all">
         {/* Close button */}
         <button
           onClick={() => setIsDismissed(true)}
-          className="absolute top-2 right-2 z-10 p-1.5 bg-black/30 hover:bg-black/50 rounded-lg transition-all"
+          className="absolute top-1.5 md:top-2 right-1.5 md:right-2 z-10 p-1 md:p-1.5 bg-black/30 hover:bg-black/50 rounded-lg transition-all"
           title="Fermer"
         >
-          <X size={14} className="text-white/80" />
+          <X size={12} className="md:hidden text-white/80" />
+          <X size={14} className="hidden md:block text-white/80" />
         </button>
 
         {/* Banner content */}
@@ -41,23 +42,23 @@ export function BannerAd({ ads, position }: BannerAdProps) {
             rel="noopener noreferrer"
             className="block"
           >
-            <div className="flex items-center justify-center p-4 min-h-[120px]">
+            <div className="flex items-center justify-center p-3 md:p-4 min-h-[80px] md:min-h-[120px]">
               <img
                 src={bannerAd.imageUrl}
                 alt={bannerAd.title}
-                className="max-h-[100px] max-w-full object-contain rounded-lg"
+                className="max-h-[70px] md:max-h-[100px] max-w-full object-contain rounded-lg"
               />
             </div>
-            <div className="absolute bottom-2 left-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
-              <p className="text-xs text-white/90 font-medium">{bannerAd.title}</p>
+            <div className="absolute bottom-1.5 md:bottom-2 left-3 md:left-4 bg-black/50 backdrop-blur-sm px-2 md:px-3 py-0.5 md:py-1 rounded-full">
+              <p className="text-[10px] md:text-xs text-white/90">{bannerAd.title}</p>
             </div>
           </a>
         ) : (
-          <div className="flex items-center justify-center p-4 min-h-[120px]">
+          <div className="flex items-center justify-center p-3 md:p-4 min-h-[80px] md:min-h-[120px]">
             <img
               src={bannerAd.imageUrl}
               alt={bannerAd.title}
-              className="max-h-[100px] max-w-full object-contain rounded-lg"
+              className="max-h-[70px] md:max-h-[100px] max-w-full object-contain rounded-lg"
             />
           </div>
         )}

@@ -73,29 +73,29 @@ export function MatchCard({
 
   return (
     <>
-      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all">
+      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 md:p-4 border border-white/10 hover:border-white/20 transition-all">
         {/* Match number */}
-        <div className="text-xs text-white/50 mb-3">
+        <div className="text-xs text-white/50 mb-2 md:mb-3">
           {translations.matchNumber} {matchNumber}
         </div>
 
-        <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
+        <div className="grid grid-cols-[1fr_auto_1fr] gap-2 md:gap-4 items-center">
           {/* Team 1 */}
-          <div className="flex items-center gap-2 justify-end">
-            <span className="truncate text-right">{team1.name}</span>
+          <div className="flex items-center gap-1.5 md:gap-2 justify-end min-w-0">
+            <span className="truncate text-right text-sm md:text-base">{team1.name}</span>
             {isUrl1 ? (
               <img
                 src={team1.flag}
                 alt={team1.name}
-                className="w-8 h-8 object-cover rounded flex-shrink-0"
+                className="w-6 h-6 md:w-8 md:h-8 object-cover rounded flex-shrink-0"
               />
             ) : (
-              <span className="text-2xl flex-shrink-0">{team1.flag}</span>
+              <span className="text-xl md:text-2xl flex-shrink-0">{team1.flag}</span>
             )}
           </div>
 
           {/* Score */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 md:gap-2">
             {isEditing ? (
               <>
                 <input
@@ -103,118 +103,124 @@ export function MatchCard({
                   min="0"
                   value={score1}
                   onChange={(e) => setScore1(e.target.value)}
-                  className="w-14 px-2 py-2 bg-white/10 border border-white/20 rounded-lg text-center outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
+                  className="w-12 md:w-14 px-1.5 md:px-2 py-1.5 md:py-2 bg-white/10 border border-white/20 rounded-lg text-center outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all text-sm md:text-base"
                   placeholder="0"
                 />
-                <span className="text-white/60">-</span>
+                <span className="text-white/60 text-sm md:text-base">-</span>
                 <input
                   type="number"
                   min="0"
                   value={score2}
                   onChange={(e) => setScore2(e.target.value)}
-                  className="w-14 px-2 py-2 bg-white/10 border border-white/20 rounded-lg text-center outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
+                  className="w-12 md:w-14 px-1.5 md:px-2 py-1.5 md:py-2 bg-white/10 border border-white/20 rounded-lg text-center outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all text-sm md:text-base"
                   placeholder="0"
                 />
               </>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 md:gap-2">
                 {match.played && match.score1 !== null && match.score2 !== null ? (
                   <>
-                    <span className="text-2xl px-3 py-1 bg-white/10 rounded-lg min-w-[3rem] text-center">
+                    <span className="text-xl md:text-2xl px-2 md:px-3 py-0.5 md:py-1 bg-white/10 rounded-lg min-w-[2.5rem] md:min-w-[3rem] text-center">
                       {match.score1}
                     </span>
-                    <span className="text-white/60">-</span>
-                    <span className="text-2xl px-3 py-1 bg-white/10 rounded-lg min-w-[3rem] text-center">
+                    <span className="text-white/60 text-sm md:text-base">-</span>
+                    <span className="text-xl md:text-2xl px-2 md:px-3 py-0.5 md:py-1 bg-white/10 rounded-lg min-w-[2.5rem] md:min-w-[3rem] text-center">
                       {match.score2}
                     </span>
                   </>
                 ) : (
-                  <span className="text-white/40 text-sm">{translations.notPlayed}</span>
+                  <span className="text-white/40 text-xs md:text-sm">{translations.notPlayed}</span>
                 )}
               </div>
             )}
           </div>
 
           {/* Team 2 */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
             {isUrl2 ? (
               <img
                 src={team2.flag}
                 alt={team2.name}
-                className="w-8 h-8 object-cover rounded flex-shrink-0"
+                className="w-6 h-6 md:w-8 md:h-8 object-cover rounded flex-shrink-0"
               />
             ) : (
-              <span className="text-2xl flex-shrink-0">{team2.flag}</span>
+              <span className="text-xl md:text-2xl flex-shrink-0">{team2.flag}</span>
             )}
-            <span className="truncate">{team2.name}</span>
+            <span className="truncate text-sm md:text-base">{team2.name}</span>
           </div>
         </div>
 
         {/* Match Link Display */}
         {match.link && match.linkName && (
-          <div className="mt-3 flex items-center gap-2 p-2 bg-blue-500/10 rounded-lg border border-blue-400/20">
+          <div className="mt-2 md:mt-3 flex items-center gap-2 p-2 bg-blue-500/10 rounded-lg border border-blue-400/20">
             {match.linkLogo && (
-              <img src={match.linkLogo} alt={match.linkName} className="w-6 h-6 rounded object-cover" />
+              <img src={match.linkLogo} alt={match.linkName} className="w-5 h-5 md:w-6 md:h-6 rounded object-cover flex-shrink-0" />
             )}
             <a
               href={match.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 text-blue-300 hover:text-blue-200 transition-colors text-sm flex items-center gap-1"
+              className="flex-1 text-blue-300 hover:text-blue-200 transition-colors text-xs md:text-sm flex items-center gap-1 min-w-0"
             >
-              <ExternalLink size={14} />
-              <span>{match.linkName}</span>
+              <ExternalLink size={12} className="md:hidden flex-shrink-0" />
+              <ExternalLink size={14} className="hidden md:block flex-shrink-0" />
+              <span className="truncate">{match.linkName}</span>
             </a>
           </div>
         )}
 
         {/* Action buttons */}
-        <div className="mt-3 flex gap-2 justify-end flex-wrap">
+        <div className="mt-2 md:mt-3 flex gap-1.5 md:gap-2 justify-end flex-wrap">
           {isEditing ? (
             <button
               onClick={handleSave}
               disabled={!score1 || !score2}
-              className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm ${
+              className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg transition-all flex items-center gap-1.5 md:gap-2 text-xs md:text-sm ${
                 score1 && score2
                   ? 'bg-gradient-to-r from-green-400 to-emerald-500 hover:shadow-lg hover:scale-105 active:scale-95'
                   : 'bg-gray-500/50 cursor-not-allowed'
               }`}
             >
-              <Save size={16} />
-              <span>{translations.save}</span>
+              <Save size={14} className="md:hidden" />
+              <Save size={16} className="hidden md:block" />
+              <span className="hidden sm:inline">{translations.save}</span>
             </button>
           ) : (
             <button
               onClick={handleEdit}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all flex items-center gap-2 text-sm border border-white/20"
+              className="px-3 md:px-4 py-1.5 md:py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all flex items-center gap-1.5 md:gap-2 text-xs md:text-sm border border-white/20"
             >
-              <Edit2 size={16} />
-              <span>{translations.edit}</span>
+              <Edit2 size={14} className="md:hidden" />
+              <Edit2 size={16} className="hidden md:block" />
+              <span className="hidden sm:inline">{translations.edit}</span>
             </button>
           )}
           
           <button
             onClick={() => setShowLinkModal(true)}
-            className="px-4 py-2 bg-cyan-500/20 hover:bg-cyan-500/30 rounded-lg transition-all flex items-center gap-2 text-sm border border-cyan-400/30"
+            className="px-3 md:px-4 py-1.5 md:py-2 bg-cyan-500/20 hover:bg-cyan-500/30 rounded-lg transition-all flex items-center gap-1.5 md:gap-2 text-xs md:text-sm border border-cyan-400/30"
           >
-            <Link size={16} />
-            <span>{match.link ? translations.edit : translations.addLink}</span>
+            <Link size={14} className="md:hidden" />
+            <Link size={16} className="hidden md:block" />
+            <span className="hidden sm:inline">{match.link ? translations.edit : translations.addLink}</span>
           </button>
           
           <button
             onClick={() => setShowEditModal(true)}
-            className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-all flex items-center gap-2 text-sm border border-blue-400/30"
+            className="px-3 md:px-4 py-1.5 md:py-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-all flex items-center gap-1.5 md:gap-2 text-xs md:text-sm border border-blue-400/30"
           >
-            <RefreshCw size={16} />
-            <span>{translations.changeTeams}</span>
+            <RefreshCw size={14} className="md:hidden" />
+            <RefreshCw size={16} className="hidden md:block" />
+            <span className="hidden lg:inline">{translations.changeTeams}</span>
           </button>
 
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-all flex items-center gap-2 text-sm border border-red-400/30"
+            className="px-3 md:px-4 py-1.5 md:py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-all flex items-center gap-1.5 md:gap-2 text-xs md:text-sm border border-red-400/30"
           >
-            <Trash2 size={16} />
-            <span>{translations.deleteMatch}</span>
+            <Trash2 size={14} className="md:hidden" />
+            <Trash2 size={16} className="hidden md:block" />
+            <span className="hidden sm:inline">{translations.deleteMatch}</span>
           </button>
         </div>
       </div>
