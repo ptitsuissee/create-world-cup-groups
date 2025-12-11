@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, LogOut, Settings, FolderOpen, Crown } from 'lucide-react';
+import { User, LogOut, Settings, FolderOpen, Crown, BarChart3, Mail } from 'lucide-react';
 import type { Translations } from '../translations';
 
 interface UserMenuProps {
@@ -11,6 +11,8 @@ interface UserMenuProps {
   onOpenSettings?: () => void;
   onOpenProjects?: () => void;
   onOpenAdManager?: () => void;
+  onOpenAnalytics?: () => void;
+  onOpenMessages?: () => void;
   translations: Translations;
 }
 
@@ -23,6 +25,8 @@ export function UserMenu({
   onOpenSettings,
   onOpenProjects,
   onOpenAdManager,
+  onOpenAnalytics,
+  onOpenMessages,
   translations: t 
 }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -168,6 +172,40 @@ export function UserMenu({
                 <div>
                   <div className="text-sm font-medium text-yellow-400">Gérer les publicités</div>
                   <div className="text-xs text-white/60">Admin uniquement</div>
+                </div>
+              </button>
+            )}
+
+            {/* Admin Analytics */}
+            {isAdmin && onOpenAnalytics && (
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  onOpenAnalytics();
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors text-left"
+              >
+                <BarChart3 className="w-5 h-5 text-green-400" />
+                <div>
+                  <div className="text-sm font-medium text-green-400">Tableau de bord Analytics</div>
+                  <div className="text-xs text-white/60">Statistiques & visites</div>
+                </div>
+              </button>
+            )}
+
+            {/* Admin Messages */}
+            {isAdmin && onOpenMessages && (
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  onOpenMessages();
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors text-left"
+              >
+                <Mail className="w-5 h-5 text-pink-400" />
+                <div>
+                  <div className="text-sm font-medium text-pink-400">Messages & Bugs</div>
+                  <div className="text-xs text-white/60">Contact & rapports de bugs</div>
                 </div>
               </button>
             )}

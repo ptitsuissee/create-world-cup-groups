@@ -31,6 +31,8 @@ import {
   AdManagerModal,
   type AdItem,
 } from "./components/AdManagerModal";
+import { AnalyticsDashboard } from "./components/AnalyticsDashboard";
+import { AdminMessagesPanel } from "./components/AdminMessagesPanel";
 import {
   translations,
   languageNames,
@@ -43,6 +45,7 @@ import {
   Save,
   Share2,
 } from "lucide-react";
+import { trackVisit, trackInteraction } from "./utils/analytics";
 
 export interface Country {
   id: string;
@@ -228,6 +231,14 @@ function App() {
     useState(false);
   const [ads, setAds] = useState<AdItem[]>([]);
 
+  // Analytics Dashboard state (Admin only)
+  const [showAnalyticsDashboard, setShowAnalyticsDashboard] =
+    useState(false);
+
+  // Admin Messages Panel state (Admin only)
+  const [showAdminMessagesPanel, setShowAdminMessagesPanel] =
+    useState(false);
+
   const t = translations[language];
 
   // Check authentication status on mount
@@ -261,6 +272,14 @@ function App() {
       setIsReadOnly(true);
     }
   }, []);
+
+  // Track page views
+  useEffect(() => {
+    trackVisit(currentView, {
+      userEmail: isAuthenticated ? userEmail : undefined,
+      userName: isAuthenticated ? userName : undefined,
+    });
+  }, [currentView, isAuthenticated, userEmail, userName]);
 
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
@@ -401,6 +420,12 @@ function App() {
 
     setGroups([...groups, newGroup]);
     setGroupNameInput("");
+
+    // Track interaction
+    trackInteraction("add_group", { groupName: trimmed }, {
+      userEmail: isAuthenticated ? userEmail : undefined,
+      userName: isAuthenticated ? userName : undefined,
+    });
   };
 
   const handleAddCountry = (e: React.FormEvent) => {
@@ -422,6 +447,12 @@ function App() {
     setCountryNameInput("");
     setCountryFlagInput("");
     setTeamType("country");
+
+    // Track interaction
+    trackInteraction("add_team", { teamName: trimmedName, teamType }, {
+      userEmail: isAuthenticated ? userEmail : undefined,
+      userName: isAuthenticated ? userName : undefined,
+    });
   };
 
   const handleImageUpload = (
@@ -556,6 +587,12 @@ function App() {
 
     // Set up the queue
     setTeamsToDrawQueue(shuffled);
+
+    // Track interaction
+    trackInteraction("random_draw", { teamsCount: selectedTeamIds.length }, {
+      userEmail: isAuthenticated ? userEmail : undefined,
+      userName: isAuthenticated ? userName : undefined,
+    });
 
     // Start with first team
     if (shuffled.length > 0) {
@@ -893,6 +930,12 @@ function App() {
 
     setShowSaveProjectModal(false);
     setToast({ message: t.projectSaved, type: "success" });
+
+    // Track interaction
+    trackInteraction("save_project", { projectName: projectName.trim() }, {
+      userEmail: isAuthenticated ? userEmail : undefined,
+      userName: isAuthenticated ? userName : undefined,
+    });
   };
 
   // Load a project from saved projects
@@ -1049,6 +1092,7 @@ function App() {
         onLogout={handleLogout}
         onOpenSettings={() => setShowUserSettingsModal(true)}
         onOpenAdManager={() => setShowAdManagerModal(true)}
+        onOpenMessages={() => setShowAdminMessagesPanel(true)}
         ads={ads}
       />
     );
@@ -1075,6 +1119,7 @@ function App() {
         onLogout={handleLogout}
         onOpenSettings={() => setShowUserSettingsModal(true)}
         onOpenAdManager={() => setShowAdManagerModal(true)}
+        onOpenMessages={() => setShowAdminMessagesPanel(true)}
         ads={ads}
       />
     );
@@ -1129,6 +1174,12 @@ function App() {
                   }
                   onOpenAdManager={() =>
                     setShowAdManagerModal(true)
+                  }
+                  onOpenAnalytics={() =>
+                    setShowAnalyticsDashboard(true)
+                  }
+                  onOpenMessages={() =>
+                    setShowAdminMessagesPanel(true)
                   }
                   translations={t}
                   ads={ads}
@@ -1698,6 +1749,23 @@ function App() {
               }}
               onClose={() => setShowAdManagerModal(false)}
               translations={t}
+            />
+          )}
+
+          {/* Admin Messages Panel */}
+          {showAdminMessagesPanel && isAdmin && (
+            <AdminMessagesPanel
+              onClose={() => setShowAdminMessagesPanel(false)}
+              translations={t}
+              authToken={localStorage.getItem("auth_token") || ""}
+            />
+          )}
+
+          {/* Analytics Dashboard */}
+          {showAnalyticsDashboard && isAdmin && (
+            <AnalyticsDashboard
+              isOpen={showAnalyticsDashboard}
+              onClose={() => setShowAnalyticsDashboard(false)}
             />
           )}
         </div>

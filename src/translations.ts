@@ -229,6 +229,8 @@ export interface Translations {
   confirm: string;
   settings: string;
   saveYourWork: string;
+  usernameTaken: string;
+  errorCheckingUsername: string;
   // Permissions
   readOnlyMode: string;
   readOnlyDesc: string;
@@ -254,6 +256,15 @@ export interface Translations {
   bugDescriptionHint: string;
   bugReportSent: string;
   bugReportError: string;
+  // Admin Messages Panel
+  adminMessages: string;
+  adminMessagesDesc: string;
+  contactMessages: string;
+  bugReports: string;
+  noContactMessages: string;
+  noBugReports: string;
+  confirmDelete: string;
+  deleted: string;
   shareProject: string;
   shareInfo: string;
   shareInfoDetails: string;
@@ -498,6 +509,8 @@ export const translations: Record<Language, Translations> = {
     confirm: 'Confirmer',
     settings: 'Paramètres',
     saveYourWork: 'Sauvegardez votre travail',
+    usernameTaken: 'Ce pseudonyme est déjà utilisé. Veuillez en choisir un autre.',
+    errorCheckingUsername: 'Erreur lors de la vérification du pseudonyme. Veuillez réessayer.',
     // Permissions
     readOnlyMode: 'Mode lecture seule',
     readOnlyDesc: 'Vous consultez le projet de',
@@ -523,6 +536,15 @@ export const translations: Record<Language, Translations> = {
     bugDescriptionHint: 'Plus vous êtes précis, plus vite nous pourrons résoudre le problème !',
     bugReportSent: 'Bug signalé avec succès !',
     bugReportError: 'Erreur lors de l\'envoi du rapport',
+    // Admin Messages Panel
+    adminMessages: 'Messages & Rapports de bugs',
+    adminMessagesDesc: 'Consultez tous les messages de contact et rapports de bugs',
+    contactMessages: 'Messages de contact',
+    bugReports: 'Rapports de bugs',
+    noContactMessages: 'Aucun message de contact pour le moment',
+    noBugReports: 'Aucun rapport de bug pour le moment',
+    confirmDelete: 'Êtes-vous sûr de vouloir supprimer ce message ?',
+    deleted: 'Message supprimé avec succès',
     shareProject: 'Partager le projet',
     shareInfo: 'Partagez ce lien avec d\'autres personnes pour leur permettre de voir votre projet en mode lecture seule.',
     shareInfoDetails: 'Les visiteurs pourront consulter votre projet mais ne pourront pas le modifier.',
@@ -763,6 +785,8 @@ export const translations: Record<Language, Translations> = {
     confirm: 'Confirm',
     settings: 'Settings',
     saveYourWork: 'Save your work',
+    usernameTaken: 'This username is already taken. Please choose another one.',
+    errorCheckingUsername: 'Error checking username. Please try again.',
     // Permissions
     readOnlyMode: 'Read-only mode',
     readOnlyDesc: 'You are viewing the project of',
@@ -788,6 +812,15 @@ export const translations: Record<Language, Translations> = {
     bugDescriptionHint: 'The more specific you are, the faster we can fix it!',
     bugReportSent: 'Bug reported successfully!',
     bugReportError: 'Error sending report',
+    // Admin Messages Panel
+    adminMessages: 'Messages & Bug Reports',
+    adminMessagesDesc: 'View all contact messages and bug reports',
+    contactMessages: 'Contact Messages',
+    bugReports: 'Bug Reports',
+    noContactMessages: 'No contact messages yet',
+    noBugReports: 'No bug reports yet',
+    confirmDelete: 'Are you sure you want to delete this message?',
+    deleted: 'Message deleted successfully',
     shareProject: 'Share Project',
     shareInfo: 'Share this link with others to let them view your project in read-only mode.',
     shareInfoDetails: 'Visitors will be able to view your project but will not be able to modify it.',
@@ -1028,6 +1061,8 @@ export const translations: Record<Language, Translations> = {
     confirm: 'Confirmar',
     settings: 'Configuración',
     saveYourWork: 'Guarda tu trabajo',
+    usernameTaken: 'Este nombre de usuario ya está en uso. Por favor elige otro.',
+    errorCheckingUsername: 'Error al verificar el nombre de usuario. Por favor, inténtalo de nuevo.',
     // Permissions
     readOnlyMode: 'Modo de solo lectura',
     readOnlyDesc: 'Estás viendo el proyecto de',
@@ -1053,6 +1088,15 @@ export const translations: Record<Language, Translations> = {
     bugDescriptionHint: '¡Cuanto más específico seas, más rápido podremos solucionarlo!',
     bugReportSent: '¡Error reportado con éxito!',
     bugReportError: 'Error al enviar el reporte',
+    // Admin Messages Panel
+    adminMessages: 'Mensajes y Reportes de Errores',
+    adminMessagesDesc: 'Ver todos los mensajes de contacto y reportes de errores',
+    contactMessages: 'Mensajes de Contacto',
+    bugReports: 'Reportes de Errores',
+    noContactMessages: 'No hay mensajes de contacto todavía',
+    noBugReports: 'No hay reportes de errores todavía',
+    confirmDelete: '¿Está seguro de que desea eliminar este mensaje?',
+    deleted: 'Mensaje eliminado con éxito',
     shareProject: 'Compartir Proyecto',
     shareInfo: 'Comparte este enlace con otros para permitirles ver tu proyecto en modo de solo lectura.',
     shareInfoDetails: 'Los visitantes podrán ver tu proyecto pero no podrán modificarlo.',
@@ -1293,6 +1337,8 @@ export const translations: Record<Language, Translations> = {
     confirm: 'Bestätigen',
     settings: 'Einstellungen',
     saveYourWork: 'Speichern Sie Ihre Arbeit',
+    usernameTaken: 'Dieser Benutzername ist bereits vergeben. Bitte wählen Sie einen anderen.',
+    errorCheckingUsername: 'Fehler bei der Überprüfung des Benutzernamens. Bitte versuchen Sie es erneut.',
     // Permissions
     readOnlyMode: 'Lesemodus',
     readOnlyDesc: 'Sie sehen sich das Projekt von',
@@ -1318,6 +1364,15 @@ export const translations: Record<Language, Translations> = {
     bugDescriptionHint: 'Je genauer du bist, desto schneller können wir es beheben!',
     bugReportSent: 'Fehler erfolgreich gemeldet!',
     bugReportError: 'Fehler beim Senden des Berichts',
+    // Admin Messages Panel
+    adminMessages: 'Nachrichten & Fehlerberichte',
+    adminMessagesDesc: 'Alle Kontaktnachrichten und Fehlerberichte anzeigen',
+    contactMessages: 'Kontaktnachrichten',
+    bugReports: 'Fehlerberichte',
+    noContactMessages: 'Noch keine Kontaktnachrichten',
+    noBugReports: 'Noch keine Fehlerberichte',
+    confirmDelete: 'Möchten Sie diese Nachricht wirklich löschen?',
+    deleted: 'Nachricht erfolgreich gelöscht',
     shareProject: 'Projekt teilen',
     shareInfo: 'Teile diesen Link mit anderen, damit sie dein Projekt im Nur-Lese-Modus anzeigen können.',
     shareInfoDetails: 'Besucher können dein Projekt anzeigen, aber nicht bearbeiten.',
@@ -1558,6 +1613,8 @@ export const translations: Record<Language, Translations> = {
     confirm: 'Conferma',
     settings: 'Impostazioni',
     saveYourWork: 'Salva il tuo lavoro',
+    usernameTaken: 'Questo nome utente è già in uso. Per favore scegline un altro.',
+    errorCheckingUsername: 'Errore durante la verifica del nome utente. Per favore riprova.',
     // Permissions
     readOnlyMode: 'Modalità sola lettura',
     readOnlyDesc: 'Stai visualizzando il progetto di',
@@ -1583,6 +1640,15 @@ export const translations: Record<Language, Translations> = {
     bugDescriptionHint: 'Più sei specifico, più velocemente potremo risolverlo!',
     bugReportSent: 'Bug segnalato con successo!',
     bugReportError: 'Errore nell\'invio della segnalazione',
+    // Admin Messages Panel
+    adminMessages: 'Messaggi e Segnalazioni Bug',
+    adminMessagesDesc: 'Visualizza tutti i messaggi di contatto e le segnalazioni di bug',
+    contactMessages: 'Messaggi di Contatto',
+    bugReports: 'Segnalazioni Bug',
+    noContactMessages: 'Nessun messaggio di contatto ancora',
+    noBugReports: 'Nessuna segnalazione di bug ancora',
+    confirmDelete: 'Sei sicuro di voler eliminare questo messaggio?',
+    deleted: 'Messaggio eliminato con successo',
     shareProject: 'Condividi Progetto',
     shareInfo: 'Condividi questo link con altri per consentire loro di visualizzare il tuo progetto in modalità di sola lettura.',
     shareInfoDetails: 'I visitatori potranno visualizzare il tuo progetto ma non potranno modificarlo.',
@@ -1823,6 +1889,8 @@ export const translations: Record<Language, Translations> = {
     confirm: 'Confirmar',
     settings: 'Configurações',
     saveYourWork: 'Salve seu trabalho',
+    usernameTaken: 'Este nome de usuário já está em uso. Por favor, escolha outro.',
+    errorCheckingUsername: 'Erro ao verificar o nome de usuário. Por favor, tente novamente.',
     // Permissions
     readOnlyMode: 'Modo somente leitura',
     readOnlyDesc: 'Você está visualizando o projeto de',
@@ -1848,6 +1916,15 @@ export const translations: Record<Language, Translations> = {
     bugDescriptionHint: 'Quanto mais específico você for, mais rápido poderemos corrigi-lo!',
     bugReportSent: 'Bug reportado com sucesso!',
     bugReportError: 'Erro ao enviar o relatório',
+    // Admin Messages Panel
+    adminMessages: 'Mensagens e Relatórios de Bugs',
+    adminMessagesDesc: 'Ver todas as mensagens de contato e relatórios de bugs',
+    contactMessages: 'Mensagens de Contato',
+    bugReports: 'Relatórios de Bugs',
+    noContactMessages: 'Nenhuma mensagem de contato ainda',
+    noBugReports: 'Nenhum relatório de bug ainda',
+    confirmDelete: 'Tem certeza de que deseja excluir esta mensagem?',
+    deleted: 'Mensagem excluída com sucesso',
     shareProject: 'Compartilhar Projeto',
     shareInfo: 'Compartilhe este link com outros para permitir que visualizem seu projeto no modo somente leitura.',
     shareInfoDetails: 'Os visitantes poderão visualizar seu projeto mas não poderão modificá-lo.',
@@ -2088,6 +2165,8 @@ export const translations: Record<Language, Translations> = {
     confirm: 'تأكيد',
     settings: 'الإعدادات',
     saveYourWork: 'احفظ عملك',
+    usernameTaken: 'اسم المستخدم هذا مستخدم بالفعل. يرجى اختيار اسم آخر.',
+    errorCheckingUsername: 'خطأ في التحقق من اسم المستخدم. يرجى المحاولة مرة أخرى.',
     // Permissions
     readOnlyMode: 'وضع القراءة فقط',
     readOnlyDesc: 'أنت تشاهد مشروع',
@@ -2113,6 +2192,15 @@ export const translations: Record<Language, Translations> = {
     bugDescriptionHint: 'كلما كنت أكثر تحديداً، كلما استطعنا إصلاحها بشكل أسرع!',
     bugReportSent: 'تم الإبلاغ عن الخطأ بنجاح!',
     bugReportError: 'خطأ في إرسال التقرير',
+    // Admin Messages Panel
+    adminMessages: 'الرسائل وتقارير الأخطاء',
+    adminMessagesDesc: 'عرض جميع رسائل الاتصال وتقارير الأخطاء',
+    contactMessages: 'رسائل الاتصال',
+    bugReports: 'تقارير الأخطاء',
+    noContactMessages: 'لا توجد رسائل اتصال حتى الآن',
+    noBugReports: 'لا توجد تقارير أخطاء حتى الآن',
+    confirmDelete: 'هل أنت متأكد أنك تريد حذف هذه الرسالة؟',
+    deleted: 'تم حذف الرسالة بنجاح',
     shareProject: 'مشاركة المشروع',
     shareInfo: 'شارك هذا الرابط مع الآخرين للسماح لهم بعرض مشروعك في وضع القراءة فقط.',
     shareInfoDetails: 'سيتمكن الزوار من عرض مشروعك لكن لن يتمكنوا من تعديله.',
@@ -2353,6 +2441,8 @@ export const translations: Record<Language, Translations> = {
     confirm: '确认',
     settings: '设置',
     saveYourWork: '保存您的工作',
+    usernameTaken: '此用户名已被使用。请选择另一个。',
+    errorCheckingUsername: '检查用户名时出错。请重试。',
     // Permissions
     readOnlyMode: '只读模式',
     readOnlyDesc: '您正在查看项目',
@@ -2378,6 +2468,15 @@ export const translations: Record<Language, Translations> = {
     bugDescriptionHint: '您描述得越详细，我们就能越快修复它！',
     bugReportSent: '错误报告成功！',
     bugReportError: '发送报告时出错',
+    // Admin Messages Panel
+    adminMessages: '消息和错误报告',
+    adminMessagesDesc: '查看所有联系消息和错误报告',
+    contactMessages: '联系消息',
+    bugReports: '错误报告',
+    noContactMessages: '暂无联系消息',
+    noBugReports: '暂无错误报告',
+    confirmDelete: '您确定要删除此消息吗？',
+    deleted: '消息已成功删除',
     shareProject: '分享项目',
     shareInfo: '与他人分享此链接，让他们以只读模式查看您的项目。',
     shareInfoDetails: '访问者可以查看您的项目，但无法修改它。',
@@ -2618,6 +2717,8 @@ export const translations: Record<Language, Translations> = {
     confirm: '確認',
     settings: '設定',
     saveYourWork: '作業を保存',
+    usernameTaken: 'このユーザー名は既に使用されています。別の名前を選択してください。',
+    errorCheckingUsername: 'ユーザー名の確認中にエラーが発生しました。もう一度お試しください。',
     // Permissions
     readOnlyMode: '読み取り専用モード',
     readOnlyDesc: 'プロジェクトを表示中',
@@ -2643,6 +2744,15 @@ export const translations: Record<Language, Translations> = {
     bugDescriptionHint: '詳細に説明していただくほど、早く修正できます！',
     bugReportSent: 'バグが報告されました！',
     bugReportError: 'レポートの送信エラー',
+    // Admin Messages Panel
+    adminMessages: 'メッセージとバグレポート',
+    adminMessagesDesc: 'すべての連絡メッセージとバグレポートを表示',
+    contactMessages: '連絡メッセージ',
+    bugReports: 'バグレポート',
+    noContactMessages: 'まだ連絡メッセージがありません',
+    noBugReports: 'まだバグレポートがありません',
+    confirmDelete: 'このメッセージを削除してもよろしいですか？',
+    deleted: 'メッセージが正常に削除されました',
     shareProject: 'プロジェクトを共有',
     shareInfo: 'このリンクを他の人と共有して、読み取り専用モードでプロジェクトを表示してもらいます。',
     shareInfoDetails: '訪問者はプロジェクトを表示できますが、編集することはできません。',
@@ -2883,6 +2993,8 @@ export const translations: Record<Language, Translations> = {
     confirm: 'Подтвердить',
     settings: 'Настройки',
     saveYourWork: 'Сохраните вашу работу',
+    usernameTaken: 'Это имя пользователя уже занято. Пожалуйста, выберите другое.',
+    errorCheckingUsername: 'Ошибка при проверке имени пользователя. Пожалуйста, попробуйте еще раз.',
     // Permissions
     readOnlyMode: 'Режим только для чтения',
     readOnlyDesc: 'Вы просматриваете проект',
@@ -2908,6 +3020,15 @@ export const translations: Record<Language, Translations> = {
     bugDescriptionHint: 'Чем подробнее вы опишете, тем быстрее мы сможем исправить!',
     bugReportSent: 'Ошибка успешно отправлена!',
     bugReportError: 'Ошибка при отправке отчета',
+    // Admin Messages Panel
+    adminMessages: 'Сообщения и отчёты об ошибках',
+    adminMessagesDesc: 'Просмотреть все контактные сообщения и отчёты об ошибках',
+    contactMessages: 'Контактные сообщения',
+    bugReports: 'Отчёты об ошибках',
+    noContactMessages: 'Пока нет контактных сообщений',
+    noBugReports: 'Пока нет отчётов об ошибках',
+    confirmDelete: 'Вы уверены, что хотите удалить это сообщение?',
+    deleted: 'Сообщение успешно удалено',
     shareProject: 'Поделиться проектом',
     shareInfo: 'Поделитесь этой ссылкой с другими, чтобы они могли просмотреть ваш проект в режиме только для чтения.',
     shareInfoDetails: 'Посетители смогут просматривать ваш проект, но не смогут его изменять.',

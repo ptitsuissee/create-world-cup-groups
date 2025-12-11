@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Mail, Lock, User, Crown } from 'lucide-react';
 import type { Translations } from '../translations';
 import { ADMIN_CONFIG, isAdminAccount } from '../config/admin';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
 
 interface AuthModalProps {
   mode: 'login' | 'signup';
@@ -52,35 +53,41 @@ export function AuthModal({ mode, onClose, onSwitchMode, translations: t }: Auth
     setLoading(true);
 
     try {
-      // Vérification du compte admin
-      if (mode === 'login' && isAdminAccount(email)) {
-        // Pour la démo, vérifier le mot de passe du compte admin
-        if (password === ADMIN_CONFIG.password) {
-          // Connexion admin réussie
-          localStorage.setItem('auth_token', 'admin-token-' + Date.now());
-          localStorage.setItem('user_email', ADMIN_CONFIG.email);
-          localStorage.setItem('user_name', ADMIN_CONFIG.name);
-          localStorage.setItem('is_admin', 'true');
-          
-          onClose();
-          window.location.reload();
-        } else {
-          setError('Mot de passe incorrect pour le compte administrateur');
-          setLoading(false);
-          return;
+      const endpoint = mode === 'login' ? 'auth/login' : 'auth/signup';
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-92e03882/${endpoint}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${publicAnonKey}`,
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            name: mode === 'signup' ? name : undefined,
+            _honeypot: '', // Honeypot protection
+          }),
         }
-      } else {
-        // Utilisateur normal - simulation
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        localStorage.setItem('auth_token', 'demo-token-' + Date.now());
-        localStorage.setItem('user_email', email);
-        localStorage.setItem('user_name', name || email.split('@')[0]);
-        localStorage.setItem('is_admin', 'false');
-        
-        onClose();
-        window.location.reload();
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result.error || 'Une erreur est survenue');
+        setLoading(false);
+        return;
       }
+
+      // Store auth data
+      localStorage.setItem('auth_token', result.token);
+      localStorage.setItem('user_email', result.user.email);
+      localStorage.setItem('user_name', result.user.name);
+      localStorage.setItem('user_avatar', result.user.avatar);
+      localStorage.setItem('is_admin', result.user.isAdmin ? 'true' : 'false');
+
+      onClose();
+      window.location.reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {

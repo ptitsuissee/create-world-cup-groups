@@ -37,6 +37,7 @@ interface MatchesViewProps {
   onLogout?: () => void;
   onOpenSettings?: () => void;
   onOpenAdManager?: () => void;
+  onOpenMessages?: () => void;
   ads?: AdItem[];
 }
 
@@ -60,6 +61,7 @@ export function MatchesView({
   onLogout,
   onOpenSettings,
   onOpenAdManager,
+  onOpenMessages,
   ads,
 }: MatchesViewProps) {
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
@@ -473,6 +475,7 @@ export function MatchesView({
           onLogout={onLogout}
           onOpenSettings={onOpenSettings}
           onOpenAdManager={onOpenAdManager}
+          onOpenMessages={onOpenMessages}
           translations={t}
           ads={ads}
         />

@@ -30,6 +30,7 @@ interface KnockoutViewProps {
   onLogout?: () => void;
   onOpenSettings?: () => void;
   onOpenAdManager?: () => void;
+  onOpenMessages?: () => void;
   ads?: AdItem[];
 }
 
@@ -51,6 +52,7 @@ export function KnockoutView({
   onLogout,
   onOpenSettings,
   onOpenAdManager,
+  onOpenMessages,
   ads,
 }: KnockoutViewProps) {
   const [showSettingsModal, setShowSettingsModal] = useState(knockoutMatches.length === 0);
@@ -283,6 +285,7 @@ export function KnockoutView({
           onLogout={onLogout}
           onOpenSettings={onOpenSettings}
           onOpenAdManager={onOpenAdManager}
+          onOpenMessages={onOpenMessages}
           ads={ads}
         />
       )}
