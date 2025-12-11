@@ -32,10 +32,13 @@ export function CountryCard({ country, onDelete, translations }: CountryCardProp
   return (
     <div
       ref={drag}
-      className={`group relative inline-flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-xl bg-gradient-to-r from-white/20 to-white/10 backdrop-blur-sm shadow-lg border border-white/30 cursor-grab select-none transition-all hover:shadow-xl hover:scale-[1.02] ${
+      className={`group relative inline-flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-xl bg-gradient-to-r from-white/20 to-white/10 backdrop-blur-sm shadow-lg border border-white/30 cursor-grab select-none transition-all hover:shadow-xl hover:scale-[1.02] active:scale-105 active:shadow-2xl ${
         isDragging ? 'opacity-40 scale-95 cursor-grabbing' : ''
       }`}
       title={country.name}
+      style={{
+        touchAction: 'none', // Prevents default touch actions
+      }}
     >
       {isUrl ? (
         <img

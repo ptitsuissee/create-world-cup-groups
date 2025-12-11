@@ -190,16 +190,33 @@ export function MatchesView({
 
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="relative text-center space-y-4 py-8">
-          {/* Language Selector */}
-          <div className="absolute top-0 right-0">
+        <div className="relative text-center space-y-4 py-4 sm:py-8">
+          {/* Top Right: User Menu + Language Selector */}
+          <div className="absolute top-0 right-0 z-10 flex items-center gap-2">
+            {/* User Menu */}
+            {userName && (
+              <UserMenu
+                userName={userName}
+                userEmail={userEmail}
+                isAdmin={isAdmin}
+                onLogout={onLogout}
+                onOpenSettings={onOpenSettings}
+                onOpenAdManager={onOpenAdManager}
+                onOpenMessages={onOpenMessages}
+                translations={t}
+                ads={ads}
+              />
+            )}
+            
+            {/* Language Selector */}
             <div className="relative">
               <button
                 onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white/15 backdrop-blur-lg rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-lg sm:rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl"
               >
-                <Globe size={18} />
-                <span className="text-sm">{languageNames[language]}</span>
+                <Globe size={14} className="sm:hidden" />
+                <Globe size={18} className="hidden sm:block" />
+                <span className="text-[10px] sm:text-sm whitespace-nowrap">{languageNames[language]}</span>
               </button>
 
               {showLanguageMenu && (
@@ -224,33 +241,36 @@ export function MatchesView({
           </div>
 
           {/* Back button */}
-          <div className="absolute top-0 left-0">
-            <div className="flex gap-2">
+          <div className="absolute top-0 left-0 z-10">
+            <div className="flex gap-1 sm:gap-2 flex-wrap max-w-[calc(100%-120px)] sm:max-w-none">
               <button
                 onClick={onBackToSetup}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white/15 backdrop-blur-lg rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-lg sm:rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl"
               >
-                <ArrowLeft size={18} />
-                <span className="text-sm">{t.backToSetup}</span>
+                <ArrowLeft size={14} className="sm:hidden" />
+                <ArrowLeft size={18} className="hidden sm:block" />
+                <span className="text-[10px] sm:text-sm whitespace-nowrap">{t.backToSetup}</span>
               </button>
               <button
                 onClick={() => setShowTournamentSettingsModal(true)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white/15 backdrop-blur-lg rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-lg sm:rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl"
               >
-                <Settings size={18} />
-                <span className="text-sm">{t.tournamentSettings}</span>
+                <Settings size={14} className="sm:hidden" />
+                <Settings size={18} className="hidden sm:block" />
+                <span className="text-[10px] sm:text-sm whitespace-nowrap">{t.tournamentSettings}</span>
               </button>
             </div>
           </div>
 
-          {/* Logo and Title */}
-          <div className="inline-flex items-center gap-4">
-            <Logo size={64} className="drop-shadow-2xl" />
-            <div>
-              <h1 className="text-5xl bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text text-transparent drop-shadow-lg">
+          {/* Logo and Title - with padding to avoid overlap */}
+          <div className="inline-flex items-center gap-2 sm:gap-4 pt-12 sm:pt-0 px-2">
+            <Logo size={64} className="drop-shadow-2xl hidden md:block flex-shrink-0" />
+            <Logo size={40} className="drop-shadow-2xl md:hidden flex-shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-3xl md:text-5xl bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text text-transparent drop-shadow-lg">
                 {t.matchesAndStandings}
               </h1>
-              <div className="h-1 bg-gradient-to-r from-transparent via-yellow-300 to-transparent opacity-40 mt-2"></div>
+              <div className="h-0.5 sm:h-1 bg-gradient-to-r from-transparent via-yellow-300 to-transparent opacity-40 mt-1 sm:mt-2"></div>
             </div>
           </div>
         </div>
@@ -465,21 +485,6 @@ export function MatchesView({
         onOpenContact={() => setShowContactModal(true)}
         onOpenBugReport={() => setShowBugReportModal(true)}
       />
-
-      {/* User Menu */}
-      {userName && (
-        <UserMenu
-          userName={userName}
-          userEmail={userEmail}
-          isAdmin={isAdmin}
-          onLogout={onLogout}
-          onOpenSettings={onOpenSettings}
-          onOpenAdManager={onOpenAdManager}
-          onOpenMessages={onOpenMessages}
-          translations={t}
-          ads={ads}
-        />
-      )}
     </div>
   );
 }
