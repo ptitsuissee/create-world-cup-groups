@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDrop } from 'react-dnd';
-import { Pencil, Check } from 'lucide-react';
+import { Pencil, Check, Trash2 } from 'lucide-react';
 import { CountryCard } from './CountryCard';
 import type { Group } from '../App';
 import type { Translations } from '../translations';
@@ -9,11 +9,12 @@ interface GroupCardProps {
   group: Group;
   onDrop: (countryId: string) => void;
   onDelete: (countryId: string) => void;
+  onDeleteGroup: (groupId: string) => void;
   onRename: (groupId: string, newName: string) => void;
   translations: Translations;
 }
 
-export function GroupCard({ group, onDrop, onDelete, onRename, translations }: GroupCardProps) {
+export function GroupCard({ group, onDrop, onDelete, onDeleteGroup, onRename, translations }: GroupCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(group.name);
 
@@ -53,6 +54,12 @@ export function GroupCard({ group, onDrop, onDelete, onRename, translations }: G
     }
   };
 
+  const handleDeleteClick = () => {
+    if (window.confirm(translations.confirmDeleteGroup)) {
+      onDeleteGroup(group.id);
+    }
+  };
+
   const countText = group.countries.length === 1 ? translations.team : translations.teams;
 
   return (
@@ -87,6 +94,13 @@ export function GroupCard({ group, onDrop, onDelete, onRename, translations }: G
         <div className="text-xs px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg flex-shrink-0 whitespace-nowrap">
           {group.countries.length} {countText}
         </div>
+        <button
+          onClick={handleDeleteClick}
+          className="text-red-400 hover:text-red-300 bg-white/10 rounded-lg p-1.5 hover:bg-white/20 transition-all flex-shrink-0"
+          title={translations.deleteGroup}
+        >
+          <Trash2 size={16} />
+        </button>
       </div>
 
       {/* Drop Zone */}

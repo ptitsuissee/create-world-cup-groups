@@ -791,6 +791,24 @@ function App() {
     );
   };
 
+  const handleDeleteGroup = (groupId: string) => {
+    const group = groups.find((g) => g.id === groupId);
+    if (!group) return;
+
+    // Move all countries from this group back to unassigned
+    if (group.countries.length > 0) {
+      setUnassignedCountries((prev) => [...prev, ...group.countries]);
+    }
+
+    // Remove the group
+    setGroups((prev) => prev.filter((g) => g.id !== groupId));
+
+    // Also remove all matches associated with this group
+    setMatches((prev) => prev.filter((m) => m.groupId !== groupId));
+
+    setToast({ message: t.groupDeleted || 'Groupe supprimé', type: 'success' });
+  };
+
   const handleRenameTeam = (
     teamId: string,
     newName: string,
@@ -1525,6 +1543,7 @@ function App() {
                         moveCountryToGroup(countryId, group.id)
                       }
                       onDelete={handleDeleteCountry}
+                      onDeleteGroup={handleDeleteGroup}
                       onRename={handleRenameGroup}
                       translations={t}
                     />
