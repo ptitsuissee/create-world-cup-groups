@@ -61,12 +61,14 @@ const getUserFromToken = (token?: string) => {
 // Routes - Mandatory prefix as per instructions
 const PREFIX = "/make-server-92e03882";
 
-// Health check at both root and prefixed
-app.get("/", (c) => c.json({ status: "ok", message: "Server is running" }));
-app.get(`${PREFIX}/health`, (c) => c.json({ status: "ok", timestamp: Date.now() }));
+// Health check
+const healthHandler = (c: any) => c.json({ status: "ok", timestamp: Date.now() });
+app.get("/", healthHandler);
+app.get("/health", healthHandler);
+app.get(`${PREFIX}/health`, healthHandler);
 
 // Auth
-app.post(`${PREFIX}/auth/login`, async (c) => {
+const loginHandler = async (c: any) => {
   try {
     const { email, password } = await c.req.json();
     const ADMIN_EMAIL = "suppmatchdrawpro@outlook.com";
@@ -92,45 +94,40 @@ app.post(`${PREFIX}/auth/login`, async (c) => {
   } catch (error) {
     return c.json({ error: 'Internal server error' }, 500);
   }
-});
+};
+app.post("/auth/login", loginHandler);
+app.post(`${PREFIX}/auth/login`, loginHandler);
 
 // Projects
-app.get(`${PREFIX}/projects`, async (c) => {
+const getProjectsHandler = async (c: any) => {
   try {
     const rawProjects = await kv.getByPrefix('project:');
-    console.log(`[SERVER] getByPrefix('project:') returned ${rawProjects?.length || 0} items`);
-    
     const projects = (rawProjects || [])
       .map(item => parseKvItem(item))
       .filter(p => p && p.id);
-    
-    console.log(`[SERVER] Returning ${projects.length} valid projects`);
     return c.json({ success: true, projects });
   } catch (error) {
     console.error('[SERVER] Projects error:', error);
-    return c.json({ error: 'Internal server error', details: error.message }, 500);
+    return c.json({ error: 'Internal server error' }, 500);
   }
-});
+};
+app.get("/projects", getProjectsHandler);
+app.get(`${PREFIX}/projects`, getProjectsHandler);
 
-app.post(`${PREFIX}/projects`, async (c) => {
+const saveProjectHandler = async (c: any) => {
   try {
     const body = await c.req.json();
     const projectId = body.id || `project-${Date.now()}`;
     const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
     const user = getUserFromToken(token);
     
-    // Check if project exists
     const existingData = await kv.get(`project:${projectId}`);
     const existingProject = parseKvItem(existingData);
     
     if (existingProject) {
-      // Check permission to update
       const isAdmin = user?.isAdmin || false;
       const isCreator = user && user.email === existingProject.creatorEmail;
-      
-      if (!isAdmin && !isCreator) {
-        return c.json({ error: 'Unauthorized to update this project' }, 403);
-      }
+      if (!isAdmin && !isCreator) return c.json({ error: 'Unauthorized' }, 403);
     }
     
     await kv.set(`project:${projectId}`, JSON.stringify({ ...body, id: projectId, updatedAt: Date.now() }));
@@ -138,63 +135,61 @@ app.post(`${PREFIX}/projects`, async (c) => {
   } catch (error) {
     return c.json({ error: 'Internal server error' }, 500);
   }
-});
+};
+app.post("/projects", saveProjectHandler);
+app.post(`${PREFIX}/projects`, saveProjectHandler);
 
-app.get(`${PREFIX}/projects/:id`, async (c) => {
+const getProjectByIdHandler = async (c: any) => {
   try {
     const data = await kv.get(`project:${c.req.param('id')}`);
     const project = parseKvItem(data);
-    
     if (project) {
-      // Increment views
       project.views = (project.views || 0) + 1;
       await kv.set(`project:${project.id}`, JSON.stringify(project));
       return c.json({ success: true, project });
     }
-    
     return c.json({ error: 'Not found' }, 404);
   } catch (error) {
     return c.json({ error: 'Internal server error' }, 500);
   }
-});
+};
+app.get("/projects/:id", getProjectByIdHandler);
+app.get(`${PREFIX}/projects/:id`, getProjectByIdHandler);
 
-app.delete(`${PREFIX}/projects/:id`, async (c) => {
+const deleteProjectHandler = async (c: any) => {
   try {
     const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
     const user = getUserFromToken(token);
-    
     if (!user) return c.json({ error: 'Unauthorized' }, 401);
     
     const data = await kv.get(`project:${c.req.param('id')}`);
     const project = parseKvItem(data);
-    
     if (!project) return c.json({ error: 'Project not found' }, 404);
     
     const isAdmin = user.isAdmin || false;
     const isCreator = user.email === project.creatorEmail;
-    
-    if (!isAdmin && !isCreator) {
-      return c.json({ error: 'Unauthorized to delete this project' }, 403);
-    }
+    if (!isAdmin && !isCreator) return c.json({ error: 'Unauthorized' }, 403);
     
     await kv.del(`project:${c.req.param('id')}`);
     return c.json({ success: true });
   } catch (error) {
     return c.json({ error: 'Internal server error' }, 500);
   }
-});
+};
+app.delete("/projects/:id", deleteProjectHandler);
+app.delete(`${PREFIX}/projects/:id`, deleteProjectHandler);
 
 // Ads
-app.get(`${PREFIX}/ads`, async (c) => {
+const getAdsHandler = async (c: any) => {
   try {
     const data = await kv.get('global:ads');
     return c.json({ success: true, ads: parseKvItem(data) || [] });
-  } catch (error) {
-    return c.json({ error: 'Internal server error' }, 500);
-  }
-});
+  } catch (error) { return c.json({ error: 'Internal server error' }, 500); }
+};
+app.get("/ads", getAdsHandler);
+app.get(`${PREFIX}/ads`, getAdsHandler);
 
-app.post(`${PREFIX}/ads`, async (c) => {
+const saveAdsHandler = async (c: any) => {
   try {
     const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
     const user = getUserFromToken(token);
@@ -202,10 +197,10 @@ app.post(`${PREFIX}/ads`, async (c) => {
     const body = await c.req.json();
     await kv.set('global:ads', JSON.stringify(body.ads));
     return c.json({ success: true });
-  } catch (error) {
-    return c.json({ error: 'Internal server error' }, 500);
-  }
-});
+  } catch (error) { return c.json({ error: 'Internal server error' }, 500); }
+};
+app.post("/ads", saveAdsHandler);
+app.post(`${PREFIX}/ads`, saveAdsHandler);
 
 // Analytics
 app.post(`${PREFIX}/analytics/track-visit`, async (c) => {

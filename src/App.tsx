@@ -249,42 +249,37 @@ function App() {
 
   // Fetch projects from server
   const fetchProjects = async (showLoading = false) => {
-    if (showLoading) setIsLoadingProjects(true);
+    // Only show skeleton if we have no projects at all
+    if (showLoading && savedProjects.length === 0) setIsLoadingProjects(true);
     
     try {
       const url = `${API_BASE}/projects`;
-      console.log("Fetching projects from:", url);
       
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${publicAnonKey}`,
-          'apikey': publicAnonKey,
           'Content-Type': 'application/json'
         },
       });
       
       if (!response.ok) {
-        throw new Error(`Server returned ${response.status}`);
+        throw new Error(`Server status: ${response.status}`);
       }
       
       const result = await response.json();
       
       if (result.success && Array.isArray(result.projects)) {
         const projects = result.projects
-          .filter((p: any) => p && p.id && (p.name || p.id))
+          .filter((p: any) => p && p.id)
           .sort((a: any, b: any) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
           
         if (projects.length > 0) {
           setSavedProjects(projects);
           localStorage.setItem("matchdraw_projects_cache", JSON.stringify(projects));
-        } else if (savedProjects.length === 0) {
-          // Only clear if we didn't have anything before
-          setSavedProjects([]);
         }
       }
     } catch (error) {
-      console.error("Critical error fetching projects:", error);
-      // Don't clear current projects on error, keep what we have
+      console.warn("Project fetch failed, using cache if available:", error);
     } finally {
       setIsLoadingProjects(false);
     }
@@ -333,7 +328,8 @@ function App() {
     try {
       const response = await fetch(`${API_BASE}/ads`, {
         headers: {
-          Authorization: `Bearer ${publicAnonKey}`,
+          'Authorization': `Bearer ${publicAnonKey}`,
+          'Content-Type': 'application/json'
         },
       });
       const result = await response.json();
@@ -345,7 +341,7 @@ function App() {
         );
       }
     } catch (error) {
-      console.error("Error fetching ads:", error);
+      console.warn("Error fetching ads:", error);
     }
   };
 
