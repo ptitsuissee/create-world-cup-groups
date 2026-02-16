@@ -278,7 +278,6 @@ export interface Translations {
   viewGroups: string;
   viewStandings: string;
   viewKnockout: string;
-  readOnlyMode: string;
   viewingProject: string;
 }
 
@@ -2022,7 +2021,7 @@ export const translations: Record<Language, Translations> = {
     draws: 'تعادلات',
     losses: 'هزائم',
     goalsFor: 'الأهداف المحرزة',
-    goalsAgainst: 'الأهداف المتلقاة',
+    goalsAgainst: 'ا��أهداف المتلقاة',
     goalDifference: 'فارق الأهداف',
     points: 'نقاط',
     position: 'المركز',

@@ -72,7 +72,7 @@ export function ContactModal({ isOpen, onClose, language, onShowToast }: Contact
     
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-92e03882/contact`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-92e03882/make-server-92e03882/contact`,
         {
           method: 'POST',
           headers: {

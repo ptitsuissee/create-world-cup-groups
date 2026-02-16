@@ -248,20 +248,19 @@ function App() {
 
   const t = translations[language];
 
+  const API_BASE = `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882/make-server-92e03882`;
+
   // Fetch projects from server
   const fetchProjects = async () => {
     try {
-      const response = await fetch(
-        `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882/projects`,
-        {
-          headers: {
-            Authorization: `Bearer ${publicAnonKey}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_BASE}/projects`, {
+        headers: {
+          Authorization: `Bearer ${publicAnonKey}`,
+        },
+      });
       const result = await response.json();
       if (result.success) {
-        setSavedProjects(result.projects);
+        setSavedProjects(result.projects || []);
       }
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -284,40 +283,43 @@ function App() {
     localStorage.setItem("matchdraw_ads", JSON.stringify(updatedAds));
     
     try {
-      await fetch(
-        `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882/ads`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`,
-            'X-Admin-Token': localStorage.getItem('auth_token') || '',
-          },
-          body: JSON.stringify({ ads: updatedAds }),
-        }
-      );
-      setToast({ message: "Publicités enregistrées au niveau mondial", type: "success" });
+      await fetch(`${API_BASE}/ads`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${publicAnonKey}`,
+          "X-Admin-Token": localStorage.getItem("auth_token") || "",
+        },
+        body: JSON.stringify({ ads: updatedAds }),
+      });
+      setToast({
+        message: "Publicités enregistrées au niveau mondial",
+        type: "success",
+      });
     } catch (error) {
       console.error("Error saving ads to server:", error);
-      setToast({ message: "Erreur lors de la sauvegarde sur le serveur", type: "error" });
+      setToast({
+        message: "Erreur lors de la sauvegarde sur le serveur",
+        type: "error",
+      });
     }
   };
 
   // Fetch ads from server
   const fetchAds = async () => {
     try {
-      const response = await fetch(
-        `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882/ads`,
-        {
-          headers: {
-            Authorization: `Bearer ${publicAnonKey}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_BASE}/ads`, {
+        headers: {
+          Authorization: `Bearer ${publicAnonKey}`,
+        },
+      });
       const result = await response.json();
       if (result.success && result.ads) {
         setAds(result.ads);
-        localStorage.setItem("matchdraw_ads", JSON.stringify(result.ads));
+        localStorage.setItem(
+          "matchdraw_ads",
+          JSON.stringify(result.ads),
+        );
       }
     } catch (error) {
       console.error("Error fetching ads:", error);
@@ -1007,33 +1009,32 @@ function App() {
 
     try {
       // Save project data to server
-      const response = await fetch(
-        `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882/projects`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${publicAnonKey}`,
-          },
-          body: JSON.stringify({
-            id: projectId,
-            name: projectName.trim(),
-            data: projectData,
-            creatorName: userName,
-            creatorEmail: userEmail,
-            groupsCount: newProject.groupsCount,
-            teamsCount: newProject.teamsCount,
-            isFeatured: newProject.isFeatured,
-            views: newProject.views,
-            createdAt: newProject.createdAt,
-            token: localStorage.getItem('auth_token'),
-          }),
-        }
-      );
+      const response = await fetch(`${API_BASE}/projects`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${publicAnonKey}`,
+        },
+        body: JSON.stringify({
+          id: projectId,
+          name: projectName.trim(),
+          data: projectData,
+          creatorName: userName,
+          creatorEmail: userEmail,
+          groupsCount: newProject.groupsCount,
+          teamsCount: newProject.teamsCount,
+          isFeatured: newProject.isFeatured,
+          views: newProject.views,
+          createdAt: newProject.createdAt,
+          token: localStorage.getItem("auth_token"),
+        }),
+      });
 
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to save project to server');
+        throw new Error(
+          result.error || "Failed to save project to server",
+        );
       }
 
       // Also save to localStorage for offline/backup
@@ -1051,45 +1052,64 @@ function App() {
       setToast({ message: t.projectSaved, type: "success" });
 
       // Track interaction
-      trackInteraction("save_project", { projectName: projectName.trim() }, {
-        userEmail: isAuthenticated ? userEmail : undefined,
-        userName: isAuthenticated ? userName : undefined,
-      });
+      trackInteraction(
+        "save_project",
+        { projectName: projectName.trim() },
+        {
+          userEmail: isAuthenticated ? userEmail : undefined,
+          userName: isAuthenticated ? userName : undefined,
+        },
+      );
     } catch (error) {
       console.error("Error saving project:", error);
-      setToast({ message: t.errorSavingProject || "Erreur lors de la sauvegarde", type: "error" });
+      setToast({
+        message:
+          t.errorSavingProject || "Erreur lors de la sauvegarde",
+        type: "error",
+      });
     }
   };
 
   // Load a project from saved projects
   const handleLoadSavedProject = async (projectId: string) => {
-    setToast({ message: t.loading || "Chargement...", type: "success" });
+    setToast({
+      message: t.loading || "Chargement...",
+      type: "success",
+    });
     try {
       // Try to load from server first
       const response = await fetch(
-        `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882/projects/${projectId}`,
+        `${API_BASE}/projects/${projectId}`,
         {
           headers: {
             Authorization: `Bearer ${publicAnonKey}`,
           },
-        }
+        },
       );
-      
+
       let data;
       let projectMeta;
 
       if (response.ok) {
         const result = await response.json();
-        data = result.project.data;
-        projectMeta = result.project;
+        if (result.success && result.project) {
+          data = result.project.data;
+          projectMeta = result.project;
+        } else {
+          throw new Error("Format de réponse invalide");
+        }
       } else {
         // Fallback to localStorage
-        const localData = localStorage.getItem(`matchdraw_project_${projectId}`);
+        const localData = localStorage.getItem(
+          `matchdraw_project_${projectId}`,
+        );
         if (!localData) {
           throw new Error("Project not found");
         }
         data = JSON.parse(localData);
-        projectMeta = savedProjects.find(p => p.id === projectId);
+        projectMeta = savedProjects.find(
+          (p) => p.id === projectId,
+        );
       }
 
       if (!data) {
@@ -1110,7 +1130,9 @@ function App() {
         setCurrentProjectName(projectMeta.name);
         setProjectCreatorName(projectMeta.creatorName);
         setProjectCreatorEmail(projectMeta.creatorEmail);
-        setProjectCreatorAvatar(projectMeta.creatorAvatar || "😀");
+        setProjectCreatorAvatar(
+          projectMeta.creatorAvatar || "😀",
+        );
 
         // Check if user is creator or admin
         const canEdit =
@@ -1124,7 +1146,8 @@ function App() {
     } catch (error) {
       console.error("Error loading project:", error);
       setToast({
-        message: t.errorLoadingProject || "Erreur lors du chargement",
+        message:
+          t.errorLoadingProject || "Erreur lors du chargement",
         type: "error",
       });
     }
@@ -1140,10 +1163,9 @@ function App() {
         : p,
     );
     setSavedProjects(updatedProjects);
-    localStorage.setItem(
-      "matchdraw_saved_projects",
-      JSON.stringify(updatedProjects),
-    );
+
+    // Save to server
+    // TODO: Implement server-side toggle
 
     setToast({
       message: updatedProjects.find((p) => p.id === projectId)
@@ -1160,13 +1182,13 @@ function App() {
 
     try {
       const response = await fetch(
-        `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882/projects/${projectId}`,
+        `${API_BASE}/projects/${projectId}`,
         {
-          method: 'DELETE',
+          method: "DELETE",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
