@@ -313,6 +313,9 @@
     letter-spacing: inherit;
     color: inherit;
     opacity: 1;
+    --lightningcss-light: initial;
+    --lightningcss-dark: ;
+    color-scheme: light;
     background-color: #0000;
     border-radius: 0;
   }
@@ -324,6 +327,9 @@
     letter-spacing: inherit;
     color: inherit;
     opacity: 1;
+    --lightningcss-light: initial;
+    --lightningcss-dark: ;
+    color-scheme: light;
     background-color: #0000;
     border-radius: 0;
   }
@@ -671,6 +677,10 @@
     z-index: 10;
   }
 
+  .z-20 {
+    z-index: 20;
+  }
+
   .z-40 {
     z-index: 40;
   }
@@ -685,6 +695,10 @@
 
   .z-\[100\] {
     z-index: 100;
+  }
+
+  .z-\[1000\] {
+    z-index: 1000;
   }
 
   .z-\[9999\] {
@@ -949,6 +963,10 @@
 
   .max-h-\[90vh\] {
     max-height: 90vh;
+  }
+
+  .max-h-\[95vh\] {
+    max-height: 95vh;
   }
 
   .max-h-\[500px\] {

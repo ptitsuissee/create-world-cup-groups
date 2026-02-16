@@ -322,14 +322,16 @@ export function MatchesView({
         )}
 
         {/* Info Messages Panel */}
-        <InfoMessagesPanel
-          messages={infoMessages}
-          onMessagesChange={onInfoMessagesChange}
-          translations={t}
-        />
+        <div className="relative z-20">
+          <InfoMessagesPanel
+            messages={infoMessages}
+            onMessagesChange={onInfoMessagesChange}
+            translations={t}
+          />
+        </div>
 
         {/* Group Tabs */}
-        <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/20">
+        <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/20 relative z-10">
           <div className="flex flex-wrap gap-2 mb-6">
             {groups.filter(g => g.countries.length >= 2).map((group) => (
               <button

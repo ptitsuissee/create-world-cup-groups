@@ -190,8 +190,8 @@ function MessageModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-br from-cyan-600/90 to-blue-600/90 backdrop-blur-xl rounded-2xl p-6 max-w-md w-full border border-white/20 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1000] p-4">
+      <div className="bg-gradient-to-br from-cyan-600/90 to-blue-600/90 backdrop-blur-xl rounded-2xl p-6 max-w-md w-full border border-white/20 shadow-2xl max-h-[95vh] overflow-y-auto relative">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-2xl">
             {message ? translations.editMessage : translations.addMessage}

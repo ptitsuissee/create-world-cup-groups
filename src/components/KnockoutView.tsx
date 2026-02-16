@@ -213,11 +213,13 @@ export function KnockoutView({
         </div>
 
         {/* Info Messages */}
-        <InfoMessagesPanel
-          messages={infoMessages}
-          onMessagesChange={onInfoMessagesChange}
-          translations={t}
-        />
+        <div className="relative z-20">
+          <InfoMessagesPanel
+            messages={infoMessages}
+            onMessagesChange={onInfoMessagesChange}
+            translations={t}
+          />
+        </div>
 
         {/* Save Project Button */}
         {onSaveProject && (
