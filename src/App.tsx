@@ -249,31 +249,44 @@ function App() {
 
   // Fetch projects from server
   const fetchProjects = async () => {
-    setIsLoadingProjects(true);
     try {
-      const response = await fetch(`${API_BASE}/projects`, {
+      // Use the fixed API_BASE with prefix
+      const url = `${API_BASE}/projects`;
+      console.log("Fetching projects from:", url);
+      
+      const response = await fetch(url, {
         headers: {
-          Authorization: `Bearer ${publicAnonKey}`,
+          'Authorization': `Bearer ${publicAnonKey}`,
+          'apikey': publicAnonKey, // Some Supabase setups require this too
+          'Content-Type': 'application/json'
         },
       });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+      }
+      
       const result = await response.json();
-      if (result.success) {
-        const projects = result.projects || [];
+      console.log("Projects fetched successfully:", result);
+      
+      if (result.success && Array.isArray(result.projects)) {
+        // We take ALL projects found on the server
+        const projects = result.projects
+          .filter((p: any) => p && p.id)
+          .sort((a: any, b: any) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
+          
         setSavedProjects(projects);
-        // Backup to localStorage
         localStorage.setItem("matchdraw_projects_cache", JSON.stringify(projects));
       }
     } catch (error) {
-      console.error("Error fetching projects:", error);
-      // Try to load from cache if server fails
+      console.error("Critical error fetching projects:", error);
+      // Fallback to cache
       const cached = localStorage.getItem("matchdraw_projects_cache");
       if (cached) {
         try {
-          setSavedProjects(JSON.parse(cached));
-        } catch (e) {
-          console.error("Error parsing cached projects:", e);
-        }
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) setSavedProjects(parsed);
+        } catch (e) { console.error("Cache parse error:", e); }
       }
     } finally {
       setIsLoadingProjects(false);
@@ -1460,13 +1473,8 @@ function App() {
             </p>
           </div>
 
-          {/* Mobile Ads - Section 1 */}
-          <div className="block 2xl:hidden px-2 mb-4">
-            <BannerAd ads={ads} position="top" />
-          </div>
-
           {/* Featured Projects / Events Section */}
-          <div className="relative z-0">
+          <div className="relative z-20">
             <FeaturedProjects
               projects={savedProjects}
               isAdmin={isAdmin}

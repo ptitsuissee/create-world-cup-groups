@@ -35,88 +35,98 @@ export function FeaturedProjects({
   onLoadProject,
   translations: t,
 }: FeaturedProjectsProps) {
-  // Filtrer les projets en vedette OU les 5 plus visités
+  // Ensure we have a valid array
   const safeProjects = Array.isArray(projects) ? projects : [];
-  const featuredProjects = safeProjects.filter(p => p && p.isFeatured);
-  const topViewedProjects = [...safeProjects]
-    .sort((a, b) => (b.views || 0) - (a.views || 0))
-    .slice(0, 5);
   
-  const displayProjects = featuredProjects.length > 0 
-    ? featuredProjects.slice(0, 5)
-    : topViewedProjects;
+  // Sort and filter projects to show a mix
+  const featuredProjects = safeProjects.filter(p => p && p.isFeatured);
+  const otherProjects = safeProjects.filter(p => p && !p.isFeatured)
+    .sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
+
+  // Combine them: featured first, then others, up to 10
+  const displayProjects = [...featuredProjects, ...otherProjects].slice(0, 10);
+
+  // Debug visibility
+  console.log("FeaturedProjects render:", {
+    totalProjects: safeProjects.length,
+    displayCount: displayProjects.length,
+    isLoading
+  });
 
   return (
-    <section className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/20">
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-2xl shadow-lg">
-            ✨
+    <section id="events-section" className="bg-white/10 backdrop-blur-xl rounded-3xl p-4 sm:p-8 shadow-2xl border border-white/20 relative z-30 overflow-visible min-h-[200px]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center text-3xl shadow-xl animate-pulse">
+            🔥
           </div>
           <div>
-            <h2 className="text-xl sm:text-2xl">{t.events || 'Événements'}</h2>
-            <p className="text-[10px] sm:text-sm text-white/70">
-              {displayProjects.length === 0
-                ? (t.noProjectsYet || 'Aucun projet pour le moment')
-                : featuredProjects.length > 0 
-                  ? (t.featuredProjects || 'Projets mis en valeur')
-                  : (t.mostViewedProjects || 'Projets les plus visités')
+            <h2 className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-white to-pink-200 bg-clip-text text-transparent uppercase italic tracking-tight">
+              {t.events || 'Événements Live'}
+            </h2>
+            <p className="text-xs sm:text-sm text-pink-200/70 font-bold uppercase tracking-widest">
+              {displayProjects.length > 0 
+                ? `${displayProjects.length} ${t.projectsFound || 'Tournois actifs'}`
+                : t.noProjectsYet || 'Prêt pour le prochain tournoi ?'
               }
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {projects.length > 0 && (
+        <div className="flex items-center gap-3">
+          {safeProjects.length > 0 && (
             <button
               onClick={onViewAllProjects}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/20"
+              className="group flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-2xl transition-all border border-white/20 shadow-lg active:scale-95"
             >
-              <span className="text-[10px] sm:text-sm font-bold">{t.viewAllProjects || 'Voir tout'}</span>
-              <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="text-xs sm:text-sm font-black uppercase tracking-tighter">{t.viewAllProjects || 'Explorer tout'}</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
           )}
         </div>
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="bg-white/5 rounded-2xl p-4 border border-white/10 animate-pulse">
-              <div className="w-full h-24 bg-white/10 rounded-xl mb-3"></div>
-              <div className="h-4 bg-white/10 rounded w-3/4 mb-2"></div>
+            <div key={i} className="bg-white/5 rounded-3xl p-5 border border-white/10 animate-pulse h-48">
+              <div className="w-full h-24 bg-white/10 rounded-2xl mb-4"></div>
+              <div className="h-4 bg-white/10 rounded w-3/4 mb-3"></div>
               <div className="h-3 bg-white/10 rounded w-1/2"></div>
             </div>
           ))}
         </div>
       ) : displayProjects.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-pink-400/20 to-rose-500/20 flex items-center justify-center text-5xl">
-            🎉
+        <div className="text-center py-20 bg-white/5 rounded-3xl border-2 border-dashed border-white/10">
+          <div className="w-24 h-24 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-pink-400/20 to-rose-500/20 flex items-center justify-center text-6xl">
+            🏆
           </div>
-          <h3 className="text-xl mb-2">{t.noEventsYet || 'Pas encore d\'événements'}</h3>
-          <p className="text-sm text-white/60 max-w-md mx-auto">
-            {t.createFirstProjectDesc || 'Créez votre premier projet et il apparaîtra ici pour que d\'autres utilisateurs puissent le découvrir !'}
+          <h3 className="text-2xl font-black mb-2 uppercase">{t.noEventsYet || 'Aucun tournoi public'}</h3>
+          <p className="text-white/60 max-w-md mx-auto px-4">
+            {t.createFirstProjectDesc || 'Soyez le premier à lancer un tournoi ! Créez votre projet et il apparaîtra ici instantanément.'}
           </p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             {displayProjects.map((project, index) => (
               <div
                 key={project.id}
-                className="group relative bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:border-white/30 transition-all hover:scale-[1.02] cursor-pointer"
+                className="group relative bg-white/10 backdrop-blur-md rounded-3xl p-5 border border-white/10 hover:border-pink-500/50 transition-all duration-500 hover:scale-[1.03] cursor-pointer shadow-xl overflow-hidden"
                 onClick={() => onLoadProject(project.id)}
               >
+                {/* Visual Flair */}
+                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-pink-500 to-transparent opacity-50"></div>
+                
                 {/* Badge Featured ou Rang */}
                 {project.isFeatured ? (
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white/20">
-                    <Star className="w-4 h-4 text-white fill-white" />
+                  <div className="absolute top-3 left-3 px-2 py-1 bg-yellow-400 text-black text-[9px] font-black rounded-lg shadow-lg z-20 uppercase tracking-tighter">
+                    ⭐ Featured
                   </div>
-                ) : (
-                  <div className="absolute -top-2 -left-2 w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg border-2 border-white/20">
-                    <span className="text-sm font-bold">#{index + 1}</span>
+                ) : index < 3 ? (
+                  <div className="absolute top-3 left-3 px-2 py-1 bg-blue-500 text-white text-[9px] font-black rounded-lg shadow-lg z-20 uppercase tracking-tighter">
+                    🔥 Trending
                   </div>
-                )}
+                ) : null}
 
                 {/* Admin Feature Toggle */}
                 {isAdmin && onToggleFeatured && (
@@ -125,80 +135,83 @@ export function FeaturedProjects({
                       e.stopPropagation();
                       onToggleFeatured(project.id);
                     }}
-                    className={`absolute top-2 right-2 p-1.5 rounded-lg transition-all ${
+                    className={`absolute top-3 right-3 p-2 rounded-xl transition-all z-30 ${
                       project.isFeatured
-                        ? 'bg-yellow-500/20 text-yellow-400'
+                        ? 'bg-yellow-500 text-black'
                         : 'bg-white/10 text-white/50 hover:bg-white/20'
                     }`}
-                    title={project.isFeatured ? 'Retirer de la mise en valeur' : 'Mettre en valeur'}
                   >
-                    <Crown className="w-3.5 h-3.5" />
+                    <Crown className="w-4 h-4" />
                   </button>
                 )}
 
                 {/* Thumbnail ou Placeholder */}
-                <div className="w-full h-24 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 mb-3 flex items-center justify-center text-4xl overflow-hidden">
+                <div className="w-full h-28 rounded-2xl bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950 mb-4 flex items-center justify-center text-5xl overflow-hidden border border-white/10 relative group-hover:rotate-1 transition-transform">
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-from)_0%,_transparent_70%)] opacity-30"></div>
                   {project.thumbnail ? (
                     <img 
                       src={project.thumbnail} 
                       alt={project.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />
                   ) : (
-                    <span>🏆</span>
+                    <span className="drop-shadow-lg group-hover:scale-110 transition-transform duration-500">
+                      {project.groupsCount > 4 ? '⚽' : '🏆'}
+                    </span>
                   )}
                 </div>
 
                 {/* Project Info */}
-                <div>
-                  <h3 className="font-medium truncate mb-1 group-hover:text-blue-300 transition-colors">
+                <div className="space-y-3">
+                  <h3 className="font-black text-lg truncate leading-tight group-hover:text-pink-300 transition-colors uppercase italic">
                     {project.name}
                   </h3>
                   
-                  <div className="flex items-center gap-3 text-xs text-white/60 mb-2">
-                    <div className="flex items-center gap-1">
-                      <span>🧩</span>
-                      <span>{project.groupsCount}</span>
+                  <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-white/60">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-blue-400">🧩</span>
+                      <span>{project.groupsCount} {t.groups || 'Groupes'}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span>⚽</span>
-                      <span>{project.teamsCount}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-pink-400">⚽</span>
+                      <span>{project.teamsCount} {t.teams || 'Teams'}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1 text-white/70">
-                      <Eye className="w-3 h-3" />
+                  <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                    <div className="flex items-center gap-1.5 text-xs font-black text-white/80">
+                      <Eye className="w-3.5 h-3.5 text-green-400" />
                       <span>{project.views.toLocaleString()}</span>
                     </div>
-                    <div className="text-white/50">
+                    <div className="text-[10px] text-white/40 font-medium truncate max-w-[80px]">
                       {t.by || 'par'} {project.creatorName}
                     </div>
                   </div>
                 </div>
 
-                {/* Hover Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none" />
+                {/* Interaction Hover Hint */}
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
               </div>
             ))}
           </div>
 
-          {/* Stats Bar */}
-          <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-sm text-white/60">
-            <div className="flex items-center gap-4">
+          {/* Bottom Info Bar */}
+          <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold uppercase tracking-widest text-white/40">
+            <div className="flex flex-wrap justify-center gap-6">
               <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-green-400" />
-                <span>{projects.length} {t.totalProjects || 'projets au total'}</span>
+                <TrendingUp className="w-4 h-4 text-green-500" />
+                <span>{safeProjects.length} {t.totalProjects || 'Projets Communauté'}</span>
               </div>
               {featuredProjects.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-yellow-400" />
-                  <span>{featuredProjects.length} {t.featured || 'en vedette'}</span>
+                  <Star className="w-4 h-4 text-yellow-500" />
+                  <span>{featuredProjects.length} {t.featured || 'Sélections Admin'}</span>
                 </div>
               )}
             </div>
-            <div className="text-xs">
-              {t.clickToLoad || 'Cliquez pour charger un projet'}
+            <div className="flex items-center gap-2 animate-bounce-horizontal">
+              <ArrowRight className="w-4 h-4 text-pink-500" />
+              <span>{t.clickToLoad || 'Sélectionner pour charger'}</span>
             </div>
           </div>
         </>

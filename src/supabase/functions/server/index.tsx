@@ -30,8 +30,20 @@ app.use('*', logger(console.log));
 const parseKvItem = (data: any) => {
   if (!data) return null;
   try {
-    const content = typeof data === 'string' ? data : (data && typeof data === 'object' && 'value' in data ? (data as any).value : JSON.stringify(data));
-    return typeof content === 'string' ? JSON.parse(content) : content;
+    // Handle both direct values and { key, value } objects from getByPrefix
+    let content = data;
+    if (typeof data === 'object' && data !== null && 'value' in data) {
+      content = data.value;
+    }
+    
+    if (typeof content === 'string') {
+      try {
+        return JSON.parse(content);
+      } catch {
+        return content;
+      }
+    }
+    return content;
   } catch (err) {
     console.error('Error parsing KV item:', err);
     return null;
@@ -86,10 +98,17 @@ app.post(`${PREFIX}/auth/login`, async (c) => {
 app.get(`${PREFIX}/projects`, async (c) => {
   try {
     const rawProjects = await kv.getByPrefix('project:');
-    const projects = rawProjects.map(parseKvItem).filter(Boolean);
+    console.log(`[SERVER] getByPrefix('project:') returned ${rawProjects?.length || 0} items`);
+    
+    const projects = (rawProjects || [])
+      .map(item => parseKvItem(item))
+      .filter(p => p && p.id);
+    
+    console.log(`[SERVER] Returning ${projects.length} valid projects`);
     return c.json({ success: true, projects });
   } catch (error) {
-    return c.json({ error: 'Internal server error' }, 500);
+    console.error('[SERVER] Projects error:', error);
+    return c.json({ error: 'Internal server error', details: error.message }, 500);
   }
 });
 
