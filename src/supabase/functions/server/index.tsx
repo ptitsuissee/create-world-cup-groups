@@ -333,19 +333,30 @@ app.post("/make-server-92e03882/projects", async (c) => {
       return c.json({ error: 'Invalid project data' }, 400);
     }
     
-    const projectId = `project-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const projectId = body.id || `project-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const sanitizedName = sanitizeInput(name);
     
-    await kv.set(`project:${projectId}`, JSON.stringify({
+    const projectData = {
+      id: projectId,
       name: sanitizedName,
       data,
-      createdAt: Date.now(),
+      creatorName: sanitizeInput(body.creatorName || 'Anonymous'),
+      creatorEmail: sanitizeInput(body.creatorEmail || ''),
+      groupsCount: body.groupsCount || 0,
+      teamsCount: body.teamsCount || 0,
+      thumbnail: body.thumbnail,
+      isFeatured: body.isFeatured || false,
+      views: body.views || 0,
+      createdAt: body.createdAt || Date.now(),
       updatedAt: Date.now(),
-    }));
+    };
+
+    await kv.set(`project:${projectId}`, JSON.stringify(projectData));
     
     return c.json({
       success: true,
       projectId,
+      project: projectData,
       message: 'Project saved successfully',
     });
   } catch (error) {
@@ -374,6 +385,79 @@ app.get("/make-server-92e03882/projects/:id", async (c) => {
     });
   } catch (error) {
     console.error('Load project error:', error);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
+app.get("/make-server-92e03882/projects", async (c) => {
+  try {
+    const projects = await kv.getByPrefix('project:');
+    const parsedProjects = projects.map(data => {
+      try {
+        const project = JSON.parse(data);
+        // Ensure id is present (it might be in the key but not in the object if not saved correctly)
+        return {
+          id: project.id,
+          name: project.name,
+          creatorName: project.creatorName || 'Anonymous',
+          creatorEmail: project.creatorEmail || '',
+          createdAt: project.createdAt,
+          updatedAt: project.updatedAt,
+          views: project.views || 0,
+          isFeatured: project.isFeatured || false,
+          groupsCount: project.groupsCount || 0,
+          teamsCount: project.teamsCount || 0,
+          thumbnail: project.thumbnail
+        };
+      } catch {
+        return null;
+      }
+    }).filter(Boolean);
+
+    // Sort by updatedAt descending
+    parsedProjects.sort((a: any, b: any) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+    return c.json({
+      success: true,
+      projects: parsedProjects,
+    });
+  } catch (error) {
+    console.error('List projects error:', error);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
+app.delete("/make-server-92e03882/projects/:id", async (c) => {
+  try {
+    const token = c.req.header('authorization')?.replace('Bearer ', '');
+    const projectId = c.req.param('id');
+    
+    // Check if it's an admin or the creator
+    const adminToken = c.req.header('x-admin-token') || token;
+    const isAdmin = adminToken && adminToken.startsWith('admin-');
+    
+    const projectData = await kv.get(`project:${sanitizeInput(projectId)}`);
+    if (!projectData) {
+      return c.json({ error: 'Project not found' }, 404);
+    }
+    
+    const project = JSON.parse(projectData);
+    
+    // Only admin or creator can delete
+    // Note: We don't have a robust way to verify creator identity with just token in KV without better auth
+    // but for now we follow the user's logic: admin can delete anything.
+    if (!isAdmin) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+    
+    await kv.del(`project:${sanitizeInput(projectId)}`);
+    
+    return c.json({
+      success: true,
+      message: 'Project deleted successfully',
+    });
+  } catch (error) {
+    console.error('Delete project error:', error);
     return c.json({ error: 'Internal server error' }, 500);
   }
 });

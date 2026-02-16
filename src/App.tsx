@@ -45,6 +45,7 @@ import {
   Share2,
 } from "lucide-react";
 import { trackVisit, trackInteraction } from "./utils/analytics";
+import { projectId as supabaseProjectId, publicAnonKey } from './utils/supabase/info';
 
 export interface Country {
   id: string;
@@ -240,8 +241,29 @@ function App() {
 
   const t = translations[language];
 
+  // Fetch projects from server
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch(
+        `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882/projects`,
+        {
+          headers: {
+            Authorization: `Bearer ${publicAnonKey}`,
+          },
+        }
+      );
+      const result = await response.json();
+      if (result.success) {
+        setSavedProjects(result.projects);
+      }
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    }
+  };
+
   // Check authentication status on mount
   useEffect(() => {
+    fetchProjects();
     const authToken = localStorage.getItem("auth_token");
     const email = localStorage.getItem("user_email");
     const name = localStorage.getItem("user_name");
@@ -888,28 +910,28 @@ function App() {
   };
 
   // Save project with name
-  const handleSaveProjectWithName = (projectName: string) => {
+  const handleSaveProjectWithName = async (projectName: string) => {
     const projectId =
       currentProjectId ||
       `project-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     const now = Date.now();
 
+    const existingProject = savedProjects.find((p) => p.id === projectId);
+
+    const projectData = {
+      groups,
+      unassignedCountries,
+      matches,
+      knockoutMatches,
+    };
+
     const newProject: ProjectMetadata = {
       id: projectId,
       name: projectName.trim(),
-      createdAt: currentProjectId
-        ? savedProjects.find((p) => p.id === projectId)
-            ?.createdAt || now
-        : now,
+      createdAt: existingProject?.createdAt || now,
       updatedAt: now,
-      views: currentProjectId
-        ? savedProjects.find((p) => p.id === projectId)
-            ?.views || 0
-        : 0,
-      isFeatured: currentProjectId
-        ? savedProjects.find((p) => p.id === projectId)
-            ?.isFeatured || false
-        : false,
+      views: existingProject?.views || 0,
+      isFeatured: existingProject?.isFeatured || false,
       creatorName: userName,
       creatorEmail: userEmail,
       groupsCount: groups.length,
@@ -918,50 +940,94 @@ function App() {
         unassignedCountries.length,
     };
 
-    // Save project data
-    const projectData = {
-      groups,
-      unassignedCountries,
-      matches,
-      knockoutMatches,
-    };
-    localStorage.setItem(
-      `matchdraw_project_${projectId}`,
-      JSON.stringify(projectData),
-    );
+    try {
+      // Save project data to server
+      const response = await fetch(
+        `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882/projects`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${publicAnonKey}`,
+          },
+          body: JSON.stringify({
+            id: projectId,
+            name: projectName.trim(),
+            data: projectData,
+            creatorName: userName,
+            creatorEmail: userEmail,
+            groupsCount: newProject.groupsCount,
+            teamsCount: newProject.teamsCount,
+            isFeatured: newProject.isFeatured,
+            views: newProject.views,
+            createdAt: newProject.createdAt,
+            token: localStorage.getItem('auth_token'),
+          }),
+        }
+      );
 
-    // Update projects list
-    const updatedProjects = currentProjectId
-      ? savedProjects.map((p) =>
-          p.id === projectId ? newProject : p,
-        )
-      : [...savedProjects, newProject];
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to save project to server');
+      }
 
-    setSavedProjects(updatedProjects);
-    localStorage.setItem(
-      "matchdraw_saved_projects",
-      JSON.stringify(updatedProjects),
-    );
-    setCurrentProjectId(projectId);
-    setCurrentProjectName(projectName.trim());
+      // Also save to localStorage for offline/backup
+      localStorage.setItem(
+        `matchdraw_project_${projectId}`,
+        JSON.stringify(projectData),
+      );
 
-    setShowSaveProjectModal(false);
-    setToast({ message: t.projectSaved, type: "success" });
+      // Refresh project list from server
+      await fetchProjects();
 
-    // Track interaction
-    trackInteraction("save_project", { projectName: projectName.trim() }, {
-      userEmail: isAuthenticated ? userEmail : undefined,
-      userName: isAuthenticated ? userName : undefined,
-    });
+      setCurrentProjectId(projectId);
+      setCurrentProjectName(projectName.trim());
+      setShowSaveProjectModal(false);
+      setToast({ message: t.projectSaved, type: "success" });
+
+      // Track interaction
+      trackInteraction("save_project", { projectName: projectName.trim() }, {
+        userEmail: isAuthenticated ? userEmail : undefined,
+        userName: isAuthenticated ? userName : undefined,
+      });
+    } catch (error) {
+      console.error("Error saving project:", error);
+      setToast({ message: t.errorSavingProject || "Erreur lors de la sauvegarde", type: "error" });
+    }
   };
 
   // Load a project from saved projects
-  const handleLoadSavedProject = (projectId: string) => {
+  const handleLoadSavedProject = async (projectId: string) => {
+    setToast({ message: t.loading || "Chargement...", type: "success" });
     try {
-      const projectData = localStorage.getItem(
-        `matchdraw_project_${projectId}`,
+      // Try to load from server first
+      const response = await fetch(
+        `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882/projects/${projectId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${publicAnonKey}`,
+          },
+        }
       );
-      if (!projectData) {
+      
+      let data;
+      let projectMeta;
+
+      if (response.ok) {
+        const result = await response.json();
+        data = result.project.data;
+        projectMeta = result.project;
+      } else {
+        // Fallback to localStorage
+        const localData = localStorage.getItem(`matchdraw_project_${projectId}`);
+        if (!localData) {
+          throw new Error("Project not found");
+        }
+        data = JSON.parse(localData);
+        projectMeta = savedProjects.find(p => p.id === projectId);
+      }
+
+      if (!data) {
         setToast({
           message: t.projectNotFound || "Projet introuvable",
           type: "error",
@@ -969,54 +1035,31 @@ function App() {
         return;
       }
 
-      const data = JSON.parse(projectData);
       setGroups(data.groups || []);
       setUnassignedCountries(data.unassignedCountries || []);
       setMatches(data.matches || []);
       setKnockoutMatches(data.knockoutMatches || []);
       setCurrentProjectId(projectId);
 
-      // Set project name and check permissions
-      const project = savedProjects.find(
-        (p) => p.id === projectId,
-      );
-      if (project) {
-        setCurrentProjectName(project.name);
-        setProjectCreatorName(project.creatorName);
-        setProjectCreatorEmail(project.creatorEmail);
-        setProjectCreatorAvatar(project.creatorAvatar || "😀");
+      if (projectMeta) {
+        setCurrentProjectName(projectMeta.name);
+        setProjectCreatorName(projectMeta.creatorName);
+        setProjectCreatorEmail(projectMeta.creatorEmail);
+        setProjectCreatorAvatar(projectMeta.creatorAvatar || "😀");
 
         // Check if user is creator or admin
         const canEdit =
           isAdmin ||
           (isAuthenticated &&
-            userEmail === project.creatorEmail);
+            userEmail === projectMeta.creatorEmail);
         setIsReadOnly(!canEdit);
-
-        if (!canEdit) {
-          setToast({
-            message: `${t.readOnlyMode} - ${t.readOnlyDesc} ${project.creatorName}`,
-            type: "warning",
-          });
-        }
       }
-
-      // Increment view count
-      const updatedProjects = savedProjects.map((p) =>
-        p.id === projectId ? { ...p, views: p.views + 1 } : p,
-      );
-      setSavedProjects(updatedProjects);
-      localStorage.setItem(
-        "matchdraw_saved_projects",
-        JSON.stringify(updatedProjects),
-      );
 
       setToast({ message: t.projectLoaded, type: "success" });
     } catch (error) {
       console.error("Error loading project:", error);
       setToast({
-        message:
-          t.errorLoadingProject || "Erreur lors du chargement",
+        message: t.errorLoadingProject || "Erreur lors du chargement",
         type: "error",
       });
     }
@@ -1047,32 +1090,47 @@ function App() {
   };
 
   // Delete a project (admin only)
-  const handleDeleteProject = (projectId: string) => {
+  const handleDeleteProject = async (projectId: string) => {
     if (!isAdmin) return;
 
-    // Remove project data
-    localStorage.removeItem(`matchdraw_project_${projectId}`);
+    try {
+      const response = await fetch(
+        `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882/projects/${projectId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('auth_token')}`,
+          },
+        }
+      );
 
-    // Remove from projects list
-    const updatedProjects = savedProjects.filter(
-      (p) => p.id !== projectId,
-    );
-    setSavedProjects(updatedProjects);
-    localStorage.setItem(
-      "matchdraw_saved_projects",
-      JSON.stringify(updatedProjects),
-    );
+      if (!response.ok) {
+        throw new Error('Failed to delete project from server');
+      }
 
-    // If it was the current project, clear it
-    if (currentProjectId === projectId) {
-      setCurrentProjectId(null);
-      handleNewProject();
+      // Remove from projects list
+      await fetchProjects();
+
+      // Also remove local backup
+      localStorage.removeItem(`matchdraw_project_${projectId}`);
+
+      // If it was the current project, clear it
+      if (currentProjectId === projectId) {
+        setCurrentProjectId(null);
+        handleNewProject();
+      }
+
+      setToast({
+        message: t.projectDeleted || "Projet supprimé",
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      setToast({
+        message: "Erreur lors de la suppression",
+        type: "error",
+      });
     }
-
-    setToast({
-      message: t.projectDeleted || "Projet supprimé",
-      type: "success",
-    });
   };
 
   // Check if we can show matches view button
