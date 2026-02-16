@@ -248,46 +248,43 @@ function App() {
   const API_BASE = `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882`;
 
   // Fetch projects from server
-  const fetchProjects = async () => {
+  const fetchProjects = async (showLoading = false) => {
+    if (showLoading) setIsLoadingProjects(true);
+    
     try {
-      // Use the fixed API_BASE with prefix
       const url = `${API_BASE}/projects`;
       console.log("Fetching projects from:", url);
       
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${publicAnonKey}`,
-          'apikey': publicAnonKey, // Some Supabase setups require this too
+          'apikey': publicAnonKey,
           'Content-Type': 'application/json'
         },
       });
       
       if (!response.ok) {
-        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        throw new Error(`Server returned ${response.status}`);
       }
       
       const result = await response.json();
-      console.log("Projects fetched successfully:", result);
       
       if (result.success && Array.isArray(result.projects)) {
-        // We take ALL projects found on the server
         const projects = result.projects
-          .filter((p: any) => p && p.id)
+          .filter((p: any) => p && p.id && (p.name || p.id))
           .sort((a: any, b: any) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
           
-        setSavedProjects(projects);
-        localStorage.setItem("matchdraw_projects_cache", JSON.stringify(projects));
+        if (projects.length > 0) {
+          setSavedProjects(projects);
+          localStorage.setItem("matchdraw_projects_cache", JSON.stringify(projects));
+        } else if (savedProjects.length === 0) {
+          // Only clear if we didn't have anything before
+          setSavedProjects([]);
+        }
       }
     } catch (error) {
       console.error("Critical error fetching projects:", error);
-      // Fallback to cache
-      const cached = localStorage.getItem("matchdraw_projects_cache");
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed)) setSavedProjects(parsed);
-        } catch (e) { console.error("Cache parse error:", e); }
-      }
+      // Don't clear current projects on error, keep what we have
     } finally {
       setIsLoadingProjects(false);
     }
@@ -296,10 +293,10 @@ function App() {
   // Periodic refresh
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchProjects();
-    }, 60000); // Every minute
+      fetchProjects(false);
+    }, 45000); // Every 45 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, [savedProjects.length]); // Re-run if list changes
 
   // Save ads to server (admin only)
   const handleSaveAds = async (updatedAds: AdItem[]) => {
@@ -369,16 +366,29 @@ function App() {
     }
 
     // Try to load projects from local cache first for instant feedback
-    const cachedProjects = localStorage.getItem("matchdraw_projects_cache");
+    const cachedProjects = localStorage.getItem("matchdraw_projects_cache") || localStorage.getItem("matchdraw_saved_projects");
     if (cachedProjects) {
       try {
-        setSavedProjects(JSON.parse(cachedProjects));
+        const parsed = JSON.parse(cachedProjects);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSavedProjects(parsed);
+        }
       } catch (e) {
         console.error("Error parsing local project cache", e);
       }
     }
 
-    fetchProjects();
+    // Load ads from cache
+    const cachedAds = localStorage.getItem("matchdraw_ads");
+    if (cachedAds) {
+      try {
+        setAds(JSON.parse(cachedAds));
+      } catch (e) {
+        console.error("Error parsing local ads cache", e);
+      }
+    }
+
+    fetchProjects(true); // Initial fetch with loading state
     fetchAds();
   }, []);
 
@@ -977,26 +987,6 @@ function App() {
     setToast({ message: t.projectSaved, type: "success" });
   };
 
-  // Load saved projects from localStorage
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(
-        "matchdraw_saved_projects",
-      );
-      if (saved) {
-        setSavedProjects(JSON.parse(saved));
-      }
-
-      // Load ads
-      const savedAds = localStorage.getItem("matchdraw_ads");
-      if (savedAds) {
-        setAds(JSON.parse(savedAds));
-      }
-    } catch (error) {
-      console.error("Error loading saved projects:", error);
-    }
-  }, []);
-
   // Show save project modal
   const handleSaveCurrentProject = () => {
     if (!isAuthenticated) {
@@ -1190,26 +1180,54 @@ function App() {
   };
 
   // Toggle featured status (admin only)
-  const handleToggleFeatured = (projectId: string) => {
+  const handleToggleFeatured = async (projectId: string) => {
     if (!isAdmin) return;
 
+    const projectToToggle = savedProjects.find((p) => p.id === projectId);
+    if (!projectToToggle) return;
+
+    const newFeaturedStatus = !projectToToggle.isFeatured;
+
+    // Optimistic update
     const updatedProjects = savedProjects.map((p) =>
       p.id === projectId
-        ? { ...p, isFeatured: !p.isFeatured }
+        ? { ...p, isFeatured: newFeaturedStatus }
         : p,
     );
     setSavedProjects(updatedProjects);
 
-    // Save to server
-    // TODO: Implement server-side toggle
+    try {
+      // Save to server
+      const response = await fetch(`${API_BASE}/projects`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        },
+        body: JSON.stringify({
+          ...projectToToggle,
+          isFeatured: newFeaturedStatus,
+          updatedAt: Date.now(),
+        }),
+      });
 
-    setToast({
-      message: updatedProjects.find((p) => p.id === projectId)
-        ?.isFeatured
-        ? t.projectFeatured || "Projet mis en vedette"
-        : t.projectUnfeatured || "Retirer de la vedette",
-      type: "success",
-    });
+      if (!response.ok) throw new Error("Failed to update featured status");
+      
+      // Refresh to be sure
+      await fetchProjects(false);
+
+      setToast({
+        message: newFeaturedStatus
+          ? t.projectFeatured || "Projet mis en vedette"
+          : t.projectUnfeatured || "Retirer de la vedette",
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Error toggling featured status:", error);
+      // Rollback on error
+      setSavedProjects(savedProjects);
+      setToast({ message: "Erreur de mise à jour", type: "error" });
+    }
   };
 
   // Delete a project (admin or creator only)
