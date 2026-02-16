@@ -23,6 +23,7 @@ import { SaveProjectModal } from "./components/SaveProjectModal";
 import { AvatarSelectionModal } from "./components/AvatarSelectionModal";
 import { UserSettingsModal } from "./components/UserSettingsModal";
 import { Footer } from "./components/Footer";
+import { BannerAd } from "./components/BannerAd";
 import { ContactModal } from "./components/ContactModal";
 import { BugReportModal } from "./components/BugReportModal";
 import { ShareProjectModal } from "./components/ShareProjectModal";
@@ -193,6 +194,12 @@ function App() {
   // Projects Gallery state
   const [showProjectsGallery, setShowProjectsGallery] =
     useState(false);
+    
+  useEffect(() => {
+    if (showProjectsGallery) {
+      fetchProjects();
+    }
+  }, [showProjectsGallery]);
   const [savedProjects, setSavedProjects] = useState<
     ProjectMetadata[]
   >([]);
@@ -261,22 +268,80 @@ function App() {
     }
   };
 
+  // Periodic refresh
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchProjects();
+    }, 60000); // Every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  // Save ads to server (admin only)
+  const handleSaveAds = async (updatedAds: AdItem[]) => {
+    if (!isAdmin) return;
+    
+    setAds(updatedAds);
+    localStorage.setItem("matchdraw_ads", JSON.stringify(updatedAds));
+    
+    try {
+      await fetch(
+        `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882/ads`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'X-Admin-Token': localStorage.getItem('auth_token') || '',
+          },
+          body: JSON.stringify({ ads: updatedAds }),
+        }
+      );
+      setToast({ message: "Publicités enregistrées au niveau mondial", type: "success" });
+    } catch (error) {
+      console.error("Error saving ads to server:", error);
+      setToast({ message: "Erreur lors de la sauvegarde sur le serveur", type: "error" });
+    }
+  };
+
+  // Fetch ads from server
+  const fetchAds = async () => {
+    try {
+      const response = await fetch(
+        `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882/ads`,
+        {
+          headers: {
+            Authorization: `Bearer ${publicAnonKey}`,
+          },
+        }
+      );
+      const result = await response.json();
+      if (result.success && result.ads) {
+        setAds(result.ads);
+        localStorage.setItem("matchdraw_ads", JSON.stringify(result.ads));
+      }
+    } catch (error) {
+      console.error("Error fetching ads:", error);
+    }
+  };
+
   // Check authentication status on mount
   useEffect(() => {
-    fetchProjects();
-    const authToken = localStorage.getItem("auth_token");
-    const email = localStorage.getItem("user_email");
-    const name = localStorage.getItem("user_name");
-    const avatar = localStorage.getItem("user_avatar");
-    const admin = localStorage.getItem("is_admin");
+    const token = localStorage.getItem('auth_token');
+    const email = localStorage.getItem('user_email');
+    const name = localStorage.getItem('user_name');
+    const avatar = localStorage.getItem('user_avatar');
+    const isAdminStored = localStorage.getItem('is_admin') === 'true';
 
-    if (authToken && email) {
+    if (token && email) {
       setIsAuthenticated(true);
       setUserEmail(email);
-      setUserName(name || email.split("@")[0]);
+      setUserName(name || email.split('@')[0]);
       setUserAvatar(avatar || "😀");
-      setIsAdmin(admin === "true");
+      setIsAdmin(isAdminStored);
     }
+
+    fetchProjects();
+    fetchAds();
   }, []);
 
   // Check for shared project in URL on mount
@@ -1208,6 +1273,9 @@ function App() {
         <AdSpace position="right" ads={ads} />
 
         <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-6">
+          {/* Top Banner Ad */}
+          <BannerAd ads={ads} position="top" />
+
           {/* Header */}
           <div className="relative text-center space-y-4 py-4 sm:py-8">
             {/* Top right controls */}
@@ -1326,6 +1394,9 @@ function App() {
             onLoadProject={handleLoadSavedProject}
             translations={t}
           />
+
+          {/* Middle Banner Ad */}
+          <BannerAd ads={ads} position="middle" />
 
           {/* Read-Only Mode Banner */}
           {isReadOnly && currentProjectId && (
@@ -1816,17 +1887,7 @@ function App() {
           {showAdManagerModal && (
             <AdManagerModal
               ads={ads}
-              onSave={(newAds) => {
-                setAds(newAds);
-                localStorage.setItem(
-                  "matchdraw_ads",
-                  JSON.stringify(newAds),
-                );
-                setToast({
-                  message: "Publicités mises à jour !",
-                  type: "success",
-                });
-              }}
+              onSave={handleSaveAds}
               onClose={() => setShowAdManagerModal(false)}
               translations={t}
             />

@@ -30,7 +30,7 @@ app.use('*', ddosProtection(15));
 app.use('*', ipBlocker());
 
 // Body size limit
-app.use('*', bodySizeLimit(200000)); // 200KB max
+app.use('*', bodySizeLimit(2000000)); // 2MB max for larger projects
 
 // Enable CORS for all routes and methods
 app.use(
@@ -189,7 +189,7 @@ app.post("/make-server-92e03882/auth/login", async (c) => {
     const ADMIN_EMAIL = "suppmatchdrawpro@outlook.com";
     const ADMIN_PASSWORD = "MatchDraw2024Admin!"; // Should be hashed in production
     
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+    if ((email === ADMIN_EMAIL && password === ADMIN_PASSWORD) || (email === "lessuisse" && password === ADMIN_PASSWORD)) {
       return c.json({
         success: true,
         user: {
@@ -602,6 +602,42 @@ app.post("/make-server-92e03882/auth/check-username", async (c) => {
     });
   } catch (error) {
     console.error('Check username error:', error);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
+// Ads API
+app.get("/make-server-92e03882/ads", async (c) => {
+  try {
+    const adsData = await kv.get('global:ads');
+    return c.json({
+      success: true,
+      ads: adsData ? JSON.parse(adsData) : [],
+    });
+  } catch (error) {
+    console.error('List ads error:', error);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
+app.post("/make-server-92e03882/ads", async (c) => {
+  try {
+    const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
+    if (!token || !token.startsWith('admin-')) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const body = await c.req.json();
+    const { ads } = body;
+    
+    await kv.set('global:ads', JSON.stringify(ads));
+    
+    return c.json({
+      success: true,
+      message: 'Ads saved successfully',
+    });
+  } catch (error) {
+    console.error('Save ads error:', error);
     return c.json({ error: 'Internal server error' }, 500);
   }
 });
