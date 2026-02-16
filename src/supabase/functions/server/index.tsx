@@ -137,24 +137,26 @@ const saveProjectHandler = async (c: any) => {
     const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
     const user = getUserFromToken(token);
     
-    console.log(`[SERVER] Save request for project ${projectId} by ${user?.email || 'anonymous'}`);
+    console.log(`[SERVER] Save request for project ${projectId} by user: ${user?.email || 'anonymous'} (isAdmin: ${user?.isAdmin || false})`);
     
+    // Check if project exists to verify permissions
     const existingData = await kv.get(`project:${projectId}`);
     const existingProject = parseKvItem(existingData);
     
     if (existingProject) {
       const isAdmin = user?.isAdmin || false;
-      // Case-insensitive email comparison for better reliability
-      const isCreator = user && existingProject.creatorEmail && 
-                        user.email.toLowerCase() === existingProject.creatorEmail.toLowerCase();
+      const creatorEmail = existingProject.creatorEmail || '';
+      const isCreator = user && creatorEmail && user.email.toLowerCase() === creatorEmail.toLowerCase();
+      
+      console.log(`[SERVER] Existing project found. Creator: ${creatorEmail}. IsAdmin: ${isAdmin}, IsCreator: ${isCreator}`);
       
       if (!isAdmin && !isCreator) {
-        console.warn(`[SERVER] Unauthorized save attempt for ${projectId}`);
+        console.warn(`[SERVER] Unauthorized save attempt for ${projectId} by ${user?.email}`);
         return c.json({ error: 'Seul le créateur ou un admin peut modifier ce projet', success: false }, 403);
       }
     }
     
-    // Don't save the token inside the DB object
+    // Prepare data for saving
     const { token: _, ...projectToSave } = body;
     const finalData = { 
       ...projectToSave, 
@@ -163,14 +165,19 @@ const saveProjectHandler = async (c: any) => {
       creatorEmail: body.creatorEmail || user?.email || existingProject?.creatorEmail
     };
     
-    // Pass object directly, kv.set handles serialization or JSONB storage
-    await kv.set(`project:${projectId}`, finalData);
+    // IMPORTANT: Always stringify for the KV store to ensure reliability
+    console.log(`[SERVER] Saving project ${projectId} to KV store...`);
+    await kv.set(`project:${projectId}`, JSON.stringify(finalData));
     
     console.log(`[SERVER] Project ${projectId} saved successfully`);
     return c.json({ success: true, projectId });
   } catch (error: any) {
     console.error('[SERVER] Save project error:', error);
-    return c.json({ error: 'Erreur serveur lors de la sauvegarde', details: error.message, success: false }, 500);
+    return c.json({ 
+      error: 'Erreur serveur lors de la sauvegarde', 
+      details: error.message, 
+      success: false 
+    }, 500);
   }
 };
 app.post("/projects", saveProjectHandler);
@@ -224,8 +231,14 @@ const deleteProjectHandler = async (c: any) => {
     if (!project) return c.json({ error: 'Project not found' }, 404);
     
     const isAdmin = user.isAdmin || false;
-    const isCreator = user.email === project.creatorEmail;
-    if (!isAdmin && !isCreator) return c.json({ error: 'Unauthorized' }, 403);
+    const creatorEmail = project.creatorEmail || '';
+    const isCreator = user.email.toLowerCase() === creatorEmail.toLowerCase();
+    
+    console.log(`[SERVER] Deleting project ${c.req.param('id')}. isAdmin: ${isAdmin}, isCreator: ${isCreator}`);
+    
+    if (!isAdmin && !isCreator) {
+      return c.json({ error: 'Seul le créateur ou un admin peut supprimer ce projet', success: false }, 403);
+    }
     
     await kv.del(`project:${c.req.param('id')}`);
     return c.json({ success: true });
