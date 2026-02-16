@@ -1094,14 +1094,18 @@ function App() {
 
   // Load a project from saved projects
   const handleLoadSavedProject = async (projectId: string) => {
+    if (!projectId) return;
+
     setToast({
       message: t.loading || "Chargement...",
       type: "success",
     });
+
     try {
+      console.log(`[APP] Loading project: ${projectId}`);
       // Try to load from server first
       const response = await fetch(
-        `${API_BASE}/projects/${projectId}`,
+        `${API_BASE}/projects/${encodeURIComponent(projectId)}`,
         {
           headers: {
             Authorization: `Bearer ${publicAnonKey}`,
@@ -1114,19 +1118,28 @@ function App() {
 
       if (response.ok) {
         const result = await response.json();
+        console.log(`[APP] Server response:`, result);
+        
         if (result.success && result.project) {
-          data = result.project.data;
+          // Robust data extraction: some projects might have data at root, others in .data
+          data = result.project.data || {
+            groups: result.project.groups,
+            unassignedCountries: result.project.unassignedCountries,
+            matches: result.project.matches,
+            knockoutMatches: result.project.knockoutMatches,
+          };
           projectMeta = result.project;
         } else {
-          throw new Error("Format de réponse invalide");
+          throw new Error("Format de réponse invalide ou projet manquant");
         }
       } else {
+        console.warn(`[APP] Server error ${response.status}, falling back to localStorage`);
         // Fallback to localStorage
         const localData = localStorage.getItem(
           `matchdraw_project_${projectId}`,
         );
         if (!localData) {
-          throw new Error("Project not found");
+          throw new Error("Project not found on server or locally");
         }
         data = JSON.parse(localData);
         projectMeta = savedProjects.find(
@@ -1134,42 +1147,45 @@ function App() {
         );
       }
 
-      if (!data) {
+      if (!data || (!data.groups && !data.unassignedCountries)) {
+        console.error(`[APP] Invalid project data structure:`, data);
         setToast({
-          message: t.projectNotFound || "Projet introuvable",
+          message: t.projectNotFound || "Projet introuvable ou corrompu",
           type: "error",
         });
         return;
       }
 
+      // Apply loaded data
       setGroups(data.groups || []);
       setUnassignedCountries(data.unassignedCountries || []);
       setMatches(data.matches || []);
       setKnockoutMatches(data.knockoutMatches || []);
+      
+      // Update UI state
       setCurrentProjectId(projectId);
+      if (currentView !== 'setup') setCurrentView('setup');
 
       if (projectMeta) {
-        setCurrentProjectName(projectMeta.name);
-        setProjectCreatorName(projectMeta.creatorName);
-        setProjectCreatorEmail(projectMeta.creatorEmail);
-        setProjectCreatorAvatar(
-          projectMeta.creatorAvatar || "😀",
-        );
+        setCurrentProjectName(projectMeta.name || "Sans nom");
+        setProjectCreatorName(projectMeta.creatorName || "Anonyme");
+        setProjectCreatorEmail(projectMeta.creatorEmail || "");
+        setProjectCreatorAvatar(projectMeta.creatorAvatar || "😀");
 
         // Check if user is creator or admin
         const canEdit =
           isAdmin ||
-          (isAuthenticated &&
-            userEmail === projectMeta.creatorEmail);
+          (isAuthenticated && userEmail === projectMeta.creatorEmail);
         setIsReadOnly(!canEdit);
+      } else {
+        setIsReadOnly(false); // Assume editable if no meta found
       }
 
       setToast({ message: t.projectLoaded, type: "success" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading project:", error);
       setToast({
-        message:
-          t.errorLoadingProject || "Erreur lors du chargement",
+        message: `${t.errorLoadingProject || "Erreur lors du chargement"}: ${error.message || ""}`,
         type: "error",
       });
     }

@@ -140,17 +140,37 @@ app.post("/projects", saveProjectHandler);
 app.post(`${PREFIX}/projects`, saveProjectHandler);
 
 const getProjectByIdHandler = async (c: any) => {
+  const projectId = c.req.param('id');
+  console.log(`[SERVER] Fetching project: ${projectId}`);
+  
   try {
-    const data = await kv.get(`project:${c.req.param('id')}`);
+    const data = await kv.get(`project:${projectId}`);
     const project = parseKvItem(data);
+    
     if (project) {
-      project.views = (project.views || 0) + 1;
-      await kv.set(`project:${project.id}`, JSON.stringify(project));
+      // Robustness: ensure project has the expected structure
+      // Increment views asynchronously - don't block the response
+      try {
+        project.views = (project.views || 0) + 1;
+        kv.set(`project:${projectId}`, JSON.stringify(project)).catch(err => 
+          console.error(`[SERVER] Error updating views for ${projectId}:`, err)
+        );
+      } catch (e) {
+        console.warn(`[SERVER] Could not update views for ${projectId}`, e);
+      }
+      
       return c.json({ success: true, project });
     }
-    return c.json({ error: 'Not found' }, 404);
-  } catch (error) {
-    return c.json({ error: 'Internal server error' }, 500);
+    
+    console.log(`[SERVER] Project not found: ${projectId}`);
+    return c.json({ error: 'Project not found', success: false }, 404);
+  } catch (error: any) {
+    console.error(`[SERVER] Error fetching project ${projectId}:`, error);
+    return c.json({ 
+      error: 'Internal server error', 
+      details: error.message,
+      success: false 
+    }, 500);
   }
 };
 app.get("/projects/:id", getProjectByIdHandler);
