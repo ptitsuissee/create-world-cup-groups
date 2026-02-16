@@ -6,6 +6,7 @@ import type { Translations } from '../translations';
 interface ProjectsGalleryProps {
   projects: ProjectMetadata[];
   isAdmin: boolean;
+  userEmail?: string;
   onToggleFeatured?: (projectId: string) => void;
   onLoadProject: (projectId: string) => void;
   onDeleteProject?: (projectId: string) => void;
@@ -16,6 +17,7 @@ interface ProjectsGalleryProps {
 export function ProjectsGallery({
   projects,
   isAdmin,
+  userEmail,
   onToggleFeatured,
   onLoadProject,
   onDeleteProject,
@@ -25,6 +27,7 @@ export function ProjectsGallery({
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'views' | 'date' | 'name'>('views');
   const [filterFeatured, setFilterFeatured] = useState(false);
+  const [filterMine, setFilterMine] = useState(false);
 
   // Filter and sort projects
   const filteredProjects = projects
@@ -32,7 +35,8 @@ export function ProjectsGallery({
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            p.creatorName.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesFeatured = !filterFeatured || p.isFeatured;
-      return matchesSearch && matchesFeatured;
+      const matchesMine = !filterMine || p.creatorEmail === userEmail;
+      return matchesSearch && matchesFeatured && matchesMine;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -110,6 +114,21 @@ export function ProjectsGallery({
               <Star className={`w-4 h-4 ${filterFeatured ? 'fill-yellow-400' : ''}`} />
               <span className="hidden sm:inline">{t.featured || 'En vedette'}</span>
             </button>
+
+            {/* Filter Mine */}
+            {userEmail && (
+              <button
+                onClick={() => setFilterMine(!filterMine)}
+                className={`px-4 py-2.5 rounded-xl border transition-all flex items-center gap-2 ${
+                  filterMine
+                    ? 'bg-blue-500/20 border-blue-400/50 text-blue-300'
+                    : 'bg-white/5 border-white/20 hover:bg-white/10'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                <span className="hidden sm:inline">{t.myProjects || 'Mes projets'}</span>
+              </button>
+            )}
           </div>
         </div>
 

@@ -51,8 +51,8 @@ export function FeaturedProjects({
             ✨
           </div>
           <div>
-            <h2 className="text-2xl">{t.events || 'Événements'}</h2>
-            <p className="text-sm text-white/70">
+            <h2 className="text-xl sm:text-2xl">{t.events || 'Événements'}</h2>
+            <p className="text-[10px] sm:text-sm text-white/70">
               {displayProjects.length === 0
                 ? (t.noProjectsYet || 'Aucun projet pour le moment')
                 : featuredProjects.length > 0 
@@ -62,15 +62,17 @@ export function FeaturedProjects({
             </p>
           </div>
         </div>
-        {projects.length > 0 && (
-          <button
-            onClick={onViewAllProjects}
-            className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/20"
-          >
-            <span className="text-sm">{t.viewAllProjects || 'Voir tous les projets'}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {projects.length > 0 && (
+            <button
+              onClick={onViewAllProjects}
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/20"
+            >
+              <span className="text-[10px] sm:text-sm font-bold">{t.viewAllProjects || 'Voir tout'}</span>
+              <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {displayProjects.length === 0 ? (

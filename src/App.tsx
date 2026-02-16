@@ -1300,111 +1300,109 @@ function App() {
 
           {/* Header */}
           <div className="relative text-center space-y-4 py-4 sm:py-8">
-            {/* Top right controls */}
-            <div className="absolute top-0 right-0 flex flex-wrap items-center gap-1.5 sm:gap-3 max-w-[calc(100%-100px)] sm:max-w-none">
-              {/* Authentication buttons */}
-              {!isAuthenticated ? (
-                <>
+            {/* Top Bar: Projects + Language + User */}
+            <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between gap-2">
+              {/* Left Side: Projects Button */}
+              <button
+                onClick={() => setShowProjectsGallery(true)}
+                className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg active:scale-95 group"
+              >
+                <div className="text-blue-300 group-hover:scale-110 transition-transform">📂</div>
+                <span className="text-[10px] sm:text-sm font-bold whitespace-nowrap text-white/90">{t.myProjects || 'Mes projets'}</span>
+              </button>
+
+              {/* Right Side: Auth/User + Language */}
+              <div className="flex items-center gap-2">
+                {/* Language Selector */}
+                <div className="relative">
+                  <button
+                    onClick={() =>
+                      setShowLanguageMenu(!showLanguageMenu)
+                    }
+                    className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg active:scale-95"
+                  >
+                    <Globe size={16} className="text-white/80" />
+                    <span className="text-[10px] sm:text-sm font-bold whitespace-nowrap uppercase text-white/90">
+                      {languageNames[language]}
+                    </span>
+                  </button>
+
+                  {showLanguageMenu && (
+                    <div className="absolute top-full right-0 mt-2 bg-white/10 backdrop-blur-xl rounded-xl border border-white/25 shadow-2xl overflow-hidden z-50 min-w-[180px]">
+                      {(
+                        Object.keys(languageNames) as Language[]
+                      ).map((lang) => (
+                        <button
+                          key={lang}
+                          onClick={() => {
+                            setLanguage(lang);
+                            setShowLanguageMenu(false);
+                          }}
+                          className={`w-full text-left px-4 py-2.5 hover:bg-white/20 transition-all text-sm font-bold ${
+                            language === lang ? "bg-white/25 text-blue-300" : "text-white/80"
+                          }`}
+                        >
+                          {languageNames[lang]}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {!isAuthenticated ? (
                   <button
                     onClick={() => {
                       setAuthMode("login");
                       setShowAuthModal(true);
                     }}
-                    className="px-2 sm:px-4 py-1.5 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-lg sm:rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl text-[10px] sm:text-sm font-medium whitespace-nowrap"
+                    className="px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all text-[10px] sm:text-sm font-bold border border-white/10"
                   >
                     {t.login}
                   </button>
-                  <button
-                    onClick={() => {
-                      setAuthMode("signup");
-                      setShowAuthModal(true);
-                    }}
-                    className="px-2 sm:px-4 py-1.5 sm:py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-lg sm:rounded-xl transition-all shadow-lg hover:shadow-xl text-[10px] sm:text-sm font-medium whitespace-nowrap"
-                  >
-                    {t.signup}
-                  </button>
-                </>
-              ) : (
-                <UserMenu
-                  userName={userName}
-                  userEmail={userEmail}
-                  userAvatar={userAvatar}
-                  isAdmin={isAdmin}
-                  onLogout={handleLogout}
-                  onOpenSettings={() =>
-                    setShowUserSettingsModal(true)
-                  }
-                  onOpenProjects={() =>
-                    setShowProjectsGallery(true)
-                  }
-                  onOpenAdManager={() =>
-                    setShowAdManagerModal(true)
-                  }
-                  onOpenAnalytics={() =>
-                    setShowAnalyticsDashboard(true)
-                  }
-                  onOpenMessages={() =>
-                    setShowAdminMessagesPanel(true)
-                  }
-                  translations={t}
-                  ads={ads}
-                />
-              )}
-
-              {/* Language Selector */}
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setShowLanguageMenu(!showLanguageMenu)
-                  }
-                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-lg sm:rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl"
-                >
-                  <Globe size={14} className="sm:hidden" />
-                  <Globe size={18} className="hidden sm:block" />
-                  <span className="text-[10px] sm:text-sm whitespace-nowrap">
-                    {languageNames[language]}
-                  </span>
-                </button>
-
-                {showLanguageMenu && (
-                  <div className="absolute top-full right-0 mt-2 bg-white/15 backdrop-blur-xl rounded-xl border border-white/25 shadow-2xl overflow-hidden z-50 min-w-[180px]">
-                    {(
-                      Object.keys(languageNames) as Language[]
-                    ).map((lang) => (
-                      <button
-                        key={lang}
-                        onClick={() => {
-                          setLanguage(lang);
-                          setShowLanguageMenu(false);
-                        }}
-                        className={`w-full text-left px-4 py-2.5 hover:bg-white/20 transition-all text-sm ${
-                          language === lang ? "bg-white/25" : ""
-                        }`}
-                      >
-                        {languageNames[lang]}
-                      </button>
-                    ))}
-                  </div>
+                ) : (
+                  <UserMenu
+                    userName={userName}
+                    userEmail={userEmail}
+                    userAvatar={userAvatar}
+                    isAdmin={isAdmin}
+                    onLogout={handleLogout}
+                    onOpenSettings={() =>
+                      setShowUserSettingsModal(true)
+                    }
+                    onOpenProjects={() =>
+                      setShowProjectsGallery(true)
+                    }
+                    onOpenAdManager={() =>
+                      setShowAdManagerModal(true)
+                    }
+                    onOpenAnalytics={() =>
+                      setShowAnalyticsDashboard(true)
+                    }
+                    onOpenMessages={() =>
+                      setShowAdminMessagesPanel(true)
+                    }
+                    translations={t}
+                  />
                 )}
               </div>
             </div>
 
             {/* Logo and Title - with padding to avoid overlap */}
-            <div className="flex flex-col items-center gap-3 sm:gap-6 pt-12 sm:pt-0 px-2 relative z-10">
+            <div className="flex flex-col items-center gap-3 sm:gap-6 pt-16 sm:pt-0 px-2 relative z-10">
               <div className="relative group">
-                <Logo size={window.innerWidth < 640 ? 56 : 96} className="drop-shadow-[0_0_25px_rgba(255,255,255,0.4)] transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" />
-                <div className="absolute -top-2 -right-2 bg-gradient-to-br from-yellow-400 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg transform rotate-12">
+                <Logo size={80} className="sm:w-24 sm:h-24 w-16 h-16 drop-shadow-[0_0_25px_rgba(255,255,255,0.4)] transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" />
+                <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-gradient-to-br from-yellow-400 to-orange-500 text-white text-[8px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full shadow-lg transform rotate-12">
                   PRO
                 </div>
               </div>
               <div className="min-w-0 text-center">
-                <h1 className="text-3xl sm:text-5xl md:text-7xl font-black bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent drop-shadow-2xl tracking-tight uppercase">
+                <h1 className="text-3xl sm:text-5xl md:text-7xl font-black bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent drop-shadow-2xl tracking-tight uppercase italic">
                   {t.appName || 'MatchDraw Pro'}
                 </h1>
-                <div className="flex items-center justify-center gap-2 mt-2">
-                  <div className="h-px w-8 sm:w-16 bg-gradient-to-r from-transparent to-blue-400"></div>
-                  <span className="text-[10px] sm:text-xs font-bold text-blue-300 uppercase tracking-widest px-2">World Creator v2.0</span>
-                  <div className="h-px w-8 sm:w-16 bg-gradient-to-l from-transparent to-blue-400"></div>
+                <div className="flex items-center justify-center gap-2 mt-1 sm:mt-2">
+                  <div className="h-px w-6 sm:w-16 bg-gradient-to-r from-transparent to-blue-400"></div>
+                  <span className="text-[8px] sm:text-[10px] md:text-xs font-bold text-blue-300 uppercase tracking-widest px-2">World Creator v2.0</span>
+                  <div className="h-px w-6 sm:w-16 bg-gradient-to-l from-transparent to-blue-400"></div>
                 </div>
               </div>
             </div>
@@ -1824,6 +1822,7 @@ function App() {
             <ProjectsGallery
               projects={savedProjects}
               isAdmin={isAdmin}
+              userEmail={userEmail}
               onToggleFeatured={handleToggleFeatured}
               onLoadProject={handleLoadSavedProject}
               onDeleteProject={handleDeleteProject}
