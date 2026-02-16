@@ -1390,19 +1390,32 @@ function App() {
             </div>
 
             {/* Logo and Title - with padding to avoid overlap */}
-            <div className="inline-flex items-center gap-2 sm:gap-4 pt-12 sm:pt-0 px-2">
-              <Logo size={64} className="drop-shadow-2xl hidden md:block flex-shrink-0" />
-              <Logo size={40} className="drop-shadow-2xl md:hidden flex-shrink-0" />
-              <div className="min-w-0">
-                <h1 className="text-xl sm:text-3xl md:text-5xl bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text text-transparent drop-shadow-lg">
-                  {t.appName}
+            <div className="flex flex-col items-center gap-3 sm:gap-6 pt-12 sm:pt-0 px-2 relative z-10">
+              <div className="relative group">
+                <Logo size={window.innerWidth < 640 ? 56 : 96} className="drop-shadow-[0_0_25px_rgba(255,255,255,0.4)] transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" />
+                <div className="absolute -top-2 -right-2 bg-gradient-to-br from-yellow-400 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg transform rotate-12">
+                  PRO
+                </div>
+              </div>
+              <div className="min-w-0 text-center">
+                <h1 className="text-3xl sm:text-5xl md:text-7xl font-black bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent drop-shadow-2xl tracking-tight uppercase">
+                  {t.appName || 'MatchDraw Pro'}
                 </h1>
-                <div className="h-0.5 sm:h-1 bg-gradient-to-r from-transparent via-yellow-300 to-transparent opacity-40 mt-1 sm:mt-2"></div>
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <div className="h-px w-8 sm:w-16 bg-gradient-to-r from-transparent to-blue-400"></div>
+                  <span className="text-[10px] sm:text-xs font-bold text-blue-300 uppercase tracking-widest px-2">World Creator v2.0</span>
+                  <div className="h-px w-8 sm:w-16 bg-gradient-to-l from-transparent to-blue-400"></div>
+                </div>
               </div>
             </div>
-            <p className="text-sm sm:text-base md:text-lg text-white/90 max-w-2xl mx-auto px-4">
+            <p className="text-sm sm:text-base md:text-lg text-white/90 max-w-2xl mx-auto px-6 text-center">
               {t.tagline}
             </p>
+          </div>
+
+          {/* Mobile Ads - Section 1 */}
+          <div className="block 2xl:hidden px-2 mb-4">
+            <BannerAd ads={ads} position="top" />
           </div>
 
           {/* Featured Projects / Events Section */}

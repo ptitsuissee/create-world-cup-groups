@@ -183,95 +183,95 @@ export function MatchesView({
   const hasMatches = groupMatches.length > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-gray-50 p-6 relative">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-gray-50 p-3 sm:p-6 relative">
       {/* Ad Spaces */}
-      <AdSpace position="left" />
-      <AdSpace position="right" />
+      <AdSpace position="left" ads={ads || []} />
+      <AdSpace position="right" ads={ads || []} />
 
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="relative text-center space-y-4 py-4 sm:py-8">
-          {/* Top Right: User Menu + Language Selector */}
-          <div className="absolute top-0 right-0 z-10 flex items-center gap-2">
-            {/* User Menu */}
-            {userName && (
-              <UserMenu
-                userName={userName}
-                userEmail={userEmail}
-                isAdmin={isAdmin}
-                onLogout={onLogout}
-                onOpenSettings={onOpenSettings}
-                onOpenAdManager={onOpenAdManager}
-                onOpenMessages={onOpenMessages}
-                translations={t}
-                ads={ads}
-              />
-            )}
-            
-            {/* Language Selector */}
-            <div className="relative">
-              <button
-                onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-lg sm:rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl"
-              >
-                <Globe size={14} className="sm:hidden" />
-                <Globe size={18} className="hidden sm:block" />
-                <span className="text-[10px] sm:text-sm whitespace-nowrap">{languageNames[language]}</span>
-              </button>
-
-              {showLanguageMenu && (
-                <div className="absolute top-full right-0 mt-2 bg-white/15 backdrop-blur-xl rounded-xl border border-white/25 shadow-2xl overflow-hidden z-50 min-w-[180px]">
-                  {(Object.keys(languageNames) as Language[]).map((lang) => (
-                    <button
-                      key={lang}
-                      onClick={() => {
-                        onLanguageChange(lang);
-                        setShowLanguageMenu(false);
-                      }}
-                      className={`w-full text-left px-4 py-2.5 hover:bg-white/20 transition-all text-sm ${
-                        language === lang ? 'bg-white/25' : ''
-                      }`}
-                    >
-                      {languageNames[lang]}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Back button */}
-          <div className="absolute top-0 left-0 z-10">
-            <div className="flex gap-1 sm:gap-2 flex-wrap max-w-[calc(100%-120px)] sm:max-w-none">
+        <div className="relative space-y-4 py-2 sm:py-8">
+          {/* Top Row: User Menu + Language Selector + Back Button */}
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex gap-1 sm:gap-2">
               <button
                 onClick={onBackToSetup}
-                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-lg sm:rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-lg sm:rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg"
               >
                 <ArrowLeft size={14} className="sm:hidden" />
                 <ArrowLeft size={18} className="hidden sm:block" />
                 <span className="text-[10px] sm:text-sm whitespace-nowrap">{t.backToSetup}</span>
               </button>
-              <button
-                onClick={() => setShowTournamentSettingsModal(true)}
-                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-lg sm:rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg hover:shadow-xl"
-              >
-                <Settings size={14} className="sm:hidden" />
-                <Settings size={18} className="hidden sm:block" />
-                <span className="text-[10px] sm:text-sm whitespace-nowrap">{t.tournamentSettings}</span>
-              </button>
+            </div>
+
+            <div className="flex items-center gap-1 sm:gap-2">
+              {/* Language Selector */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-lg sm:rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg"
+                >
+                  <Globe size={14} className="sm:hidden" />
+                  <Globe size={18} className="hidden sm:block" />
+                  <span className="text-[10px] sm:text-sm whitespace-nowrap">{languageNames[language]}</span>
+                </button>
+
+                {showLanguageMenu && (
+                  <div className="absolute top-full right-0 mt-2 bg-white/15 backdrop-blur-xl rounded-xl border border-white/25 shadow-2xl overflow-hidden z-50 min-w-[180px]">
+                    {(Object.keys(languageNames) as Language[]).map((lang) => (
+                      <button
+                        key={lang}
+                        onClick={() => {
+                          onLanguageChange(lang);
+                          setShowLanguageMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 hover:bg-white/20 transition-all text-sm ${
+                          language === lang ? 'bg-white/25' : ''
+                        }`}
+                      >
+                        {languageNames[lang]}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* User Menu */}
+              {userName && (
+                <UserMenu
+                  userName={userName}
+                  userEmail={userEmail}
+                  isAdmin={isAdmin}
+                  onLogout={onLogout}
+                  onOpenSettings={onOpenSettings}
+                  onOpenAdManager={onOpenAdManager}
+                  onOpenMessages={onOpenMessages}
+                  translations={t}
+                  ads={ads}
+                />
+              )}
             </div>
           </div>
 
-          {/* Logo and Title - with padding to avoid overlap */}
-          <div className="inline-flex items-center gap-2 sm:gap-4 pt-12 sm:pt-0 px-2">
-            <Logo size={64} className="drop-shadow-2xl hidden md:block flex-shrink-0" />
-            <Logo size={40} className="drop-shadow-2xl md:hidden flex-shrink-0" />
-            <div className="min-w-0">
-              <h1 className="text-xl sm:text-3xl md:text-5xl bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text text-transparent drop-shadow-lg">
-                {t.matchesAndStandings}
-              </h1>
-              <div className="h-0.5 sm:h-1 bg-gradient-to-r from-transparent via-yellow-300 to-transparent opacity-40 mt-1 sm:mt-2"></div>
+          {/* Logo and Title */}
+          <div className="flex flex-col items-center gap-2 sm:gap-4 text-center">
+            <div className="flex items-center gap-3">
+              <Logo size={window.innerWidth < 640 ? 40 : 64} className="drop-shadow-2xl flex-shrink-0" />
+              <div className="min-w-0">
+                <h1 className="text-xl sm:text-3xl md:text-5xl font-black bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text text-transparent drop-shadow-lg uppercase">
+                  {t.matchesAndStandings}
+                </h1>
+                <div className="h-0.5 sm:h-1 bg-gradient-to-r from-transparent via-yellow-300 to-transparent opacity-40 mt-1 sm:mt-2"></div>
+              </div>
             </div>
+            
+            <button
+              onClick={() => setShowTournamentSettingsModal(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all text-[10px] sm:text-xs"
+            >
+              <Settings size={14} />
+              <span>{t.tournamentSettings}</span>
+            </button>
           </div>
         </div>
 
@@ -331,13 +331,13 @@ export function MatchesView({
         </div>
 
         {/* Group Tabs */}
-        <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-white/20 relative z-10">
-          <div className="flex flex-wrap gap-2 mb-6">
+        <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-4 sm:p-6 shadow-2xl border border-white/20 relative z-10 overflow-hidden">
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
             {groups.filter(g => g.countries.length >= 2).map((group) => (
               <button
                 key={group.id}
                 onClick={() => setSelectedGroupId(group.id)}
-                className={`px-6 py-3 rounded-xl transition-all shadow-lg ${
+                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl transition-all shadow-lg whitespace-nowrap text-sm sm:text-base ${
                   selectedGroupId === group.id
                     ? 'bg-gradient-to-r from-blue-500 to-purple-500 scale-105'
                     : 'bg-white/10 hover:bg-white/20'
@@ -349,38 +349,42 @@ export function MatchesView({
           </div>
 
           {selectedGroup && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Standings */}
-              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg">
-                    <Trophy size={20} />
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-white/10">
+                <div className="flex items-center gap-2 sm:gap-3 mb-4">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg">
+                    <Trophy size={16} className="sm:hidden" />
+                    <Trophy size={20} className="hidden sm:block" />
                   </div>
-                  <h2 className="text-2xl">{t.standings}</h2>
+                  <h2 className="text-xl sm:text-2xl">{t.standings}</h2>
                 </div>
-                <GroupStandings
-                  group={selectedGroup}
-                  matches={groupMatches}
-                  translations={t}
-                />
+                <div className="overflow-x-auto">
+                  <GroupStandings
+                    group={selectedGroup}
+                    matches={groupMatches}
+                    translations={t}
+                  />
+                </div>
               </div>
 
               {/* Matches */}
-              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg">
-                      <Calendar size={20} />
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-white/10">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg">
+                      <Calendar size={16} className="sm:hidden" />
+                      <Calendar size={20} className="hidden sm:block" />
                     </div>
-                    <h2 className="text-2xl">{t.matches}</h2>
+                    <h2 className="text-xl sm:text-2xl">{t.matches}</h2>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     {hasMatches && (
                       <button
                         onClick={() => setShowCreateMatchModal(true)}
-                        className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 rounded-lg shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 text-sm"
+                        className="flex-1 sm:flex-none px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 text-[10px] sm:text-sm"
                       >
-                        <Plus size={16} />
+                        <Plus size={14} />
                         <span>{t.createMatchManually}</span>
                       </button>
                     )}
@@ -388,16 +392,16 @@ export function MatchesView({
                       <>
                         <button
                           onClick={() => setShowCreateMatchModal(true)}
-                          className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 rounded-lg shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 text-sm"
+                          className="flex-1 sm:flex-none px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 text-[10px] sm:text-sm"
                         >
-                          <Plus size={16} />
+                          <Plus size={14} />
                           <span>{t.createMatchManually}</span>
                         </button>
                         <button
                           onClick={() => generateMatchesForGroup(selectedGroup.id)}
-                          className="px-4 py-2 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2 text-sm"
+                          className="flex-1 sm:flex-none px-3 py-2 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 text-[10px] sm:text-sm text-white"
                         >
-                          <Zap size={16} />
+                          <Zap size={14} />
                           <span>{t.generateMatches}</span>
                         </button>
                       </>
