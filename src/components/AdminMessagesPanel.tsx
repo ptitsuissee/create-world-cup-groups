@@ -45,7 +45,7 @@ export function AdminMessagesPanel({ onClose, translations: t, authToken }: Admi
 
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-92e03882/make-server-92e03882/admin/messages`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-92e03882/admin/messages`,
         {
           method: 'GET',
           headers: {

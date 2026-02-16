@@ -11,7 +11,7 @@ export const trackVisit = async (
 ) => {
   try {
     await fetch(
-      `https://${projectId}.supabase.co/functions/v1/make-server-92e03882/make-server-92e03882/analytics/track-visit`,
+      `https://${projectId}.supabase.co/functions/v1/make-server-92e03882/analytics/track-visit`,
       {
         method: "POST",
         headers: {
@@ -37,7 +37,7 @@ export const trackInteraction = async (
 ) => {
   try {
     await fetch(
-      `https://${projectId}.supabase.co/functions/v1/make-server-92e03882/make-server-92e03882/analytics/track-interaction`,
+      `https://${projectId}.supabase.co/functions/v1/make-server-92e03882/analytics/track-interaction`,
       {
         method: "POST",
         headers: {

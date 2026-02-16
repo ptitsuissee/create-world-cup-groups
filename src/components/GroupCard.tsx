@@ -12,14 +12,16 @@ interface GroupCardProps {
   onDeleteGroup: (groupId: string) => void;
   onRename: (groupId: string, newName: string) => void;
   translations: Translations;
+  isReadOnly?: boolean;
 }
 
-export function GroupCard({ group, onDrop, onDelete, onDeleteGroup, onRename, translations }: GroupCardProps) {
+export function GroupCard({ group, onDrop, onDelete, onDeleteGroup, onRename, translations, isReadOnly }: GroupCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(group.name);
 
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'country',
+    canDrop: () => !isReadOnly,
     drop: (item: { id: string }) => {
       console.log('Dropping item into group:', item.id, group.id);
       onDrop(item.id);
@@ -31,6 +33,7 @@ export function GroupCard({ group, onDrop, onDelete, onDeleteGroup, onRename, tr
   }), [onDrop, group.id]);
 
   const handleStartEdit = () => {
+    if (isReadOnly) return;
     setIsEditing(true);
     setEditName(group.name);
   };
@@ -94,13 +97,15 @@ export function GroupCard({ group, onDrop, onDelete, onDeleteGroup, onRename, tr
         <div className="text-xs px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg flex-shrink-0 whitespace-nowrap">
           {group.countries.length} {countText}
         </div>
-        <button
-          onClick={handleDeleteClick}
-          className="text-red-400 hover:text-red-300 bg-white/10 rounded-lg p-1.5 hover:bg-white/20 transition-all flex-shrink-0"
-          title={translations.deleteGroup}
-        >
-          <Trash2 size={16} />
-        </button>
+        {!isReadOnly && (
+          <button
+            onClick={handleDeleteClick}
+            className="text-red-400 hover:text-red-300 bg-white/10 rounded-lg p-1.5 hover:bg-white/20 transition-all flex-shrink-0"
+            title={translations.deleteGroup}
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
       </div>
 
       {/* Drop Zone */}
@@ -118,7 +123,7 @@ export function GroupCard({ group, onDrop, onDelete, onDeleteGroup, onRename, tr
           </div>
         ) : (
           group.countries.map((country) => (
-            <CountryCard key={country.id} country={country} onDelete={onDelete} translations={translations} />
+            <CountryCard key={country.id} country={country} onDelete={onDelete} translations={translations} isReadOnly={isReadOnly} />
           ))
         )}
       </div>

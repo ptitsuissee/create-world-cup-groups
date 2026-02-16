@@ -19,6 +19,7 @@ export interface ProjectMetadata {
 interface FeaturedProjectsProps {
   projects: ProjectMetadata[];
   isAdmin: boolean;
+  isLoading?: boolean;
   onToggleFeatured?: (projectId: string) => void;
   onViewAllProjects: () => void;
   onLoadProject: (projectId: string) => void;
@@ -28,15 +29,17 @@ interface FeaturedProjectsProps {
 export function FeaturedProjects({
   projects,
   isAdmin,
+  isLoading = false,
   onToggleFeatured,
   onViewAllProjects,
   onLoadProject,
   translations: t,
 }: FeaturedProjectsProps) {
   // Filtrer les projets en vedette OU les 5 plus visités
-  const featuredProjects = projects.filter(p => p.isFeatured);
-  const topViewedProjects = [...projects]
-    .sort((a, b) => b.views - a.views)
+  const safeProjects = Array.isArray(projects) ? projects : [];
+  const featuredProjects = safeProjects.filter(p => p && p.isFeatured);
+  const topViewedProjects = [...safeProjects]
+    .sort((a, b) => (b.views || 0) - (a.views || 0))
     .slice(0, 5);
   
   const displayProjects = featuredProjects.length > 0 
@@ -75,7 +78,17 @@ export function FeaturedProjects({
         </div>
       </div>
 
-      {displayProjects.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="bg-white/5 rounded-2xl p-4 border border-white/10 animate-pulse">
+              <div className="w-full h-24 bg-white/10 rounded-xl mb-3"></div>
+              <div className="h-4 bg-white/10 rounded w-3/4 mb-2"></div>
+              <div className="h-3 bg-white/10 rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
+      ) : displayProjects.length === 0 ? (
         <div className="text-center py-12">
           <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-pink-400/20 to-rose-500/20 flex items-center justify-center text-5xl">
             🎉

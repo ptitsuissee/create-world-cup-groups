@@ -32,10 +32,12 @@ export function ProjectsGallery({
   // Filter and sort projects
   const filteredProjects = projects
     .filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           p.creatorName.toLowerCase().includes(searchQuery.toLowerCase());
+      const name = p.name || '';
+      const creator = p.creatorName || '';
+      const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           creator.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesFeatured = !filterFeatured || p.isFeatured;
-      const matchesMine = !filterMine || p.creatorEmail === userEmail;
+      const matchesMine = !filterMine || (userEmail && p.creatorEmail === userEmail);
       return matchesSearch && matchesFeatured && matchesMine;
     })
     .sort((a, b) => {
@@ -158,9 +160,9 @@ export function ProjectsGallery({
                   )}
 
                   {/* Admin Controls */}
-                  {isAdmin && (
+                  {(isAdmin || (userEmail && project.creatorEmail === userEmail)) && (
                     <div className="absolute top-2 right-2 flex gap-1 z-10">
-                      {onToggleFeatured && (
+                      {isAdmin && onToggleFeatured && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

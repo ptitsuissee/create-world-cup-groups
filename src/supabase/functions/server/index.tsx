@@ -38,6 +38,14 @@ const parseKvItem = (data: any) => {
   }
 };
 
+// Utility to get user from token
+const getUserFromToken = (token?: string) => {
+  if (!token) return null;
+  const [type, email, timestamp] = token.split(':');
+  if (!type || !email) return null;
+  return { type, email, isAdmin: type === 'admin' };
+};
+
 // Routes - Mandatory prefix as per instructions
 const PREFIX = "/make-server-92e03882";
 
@@ -56,7 +64,7 @@ app.post(`${PREFIX}/auth/login`, async (c) => {
       return c.json({
         success: true,
         user: { email: ADMIN_EMAIL, name: "LesSuisse", isAdmin: true, avatar: "👑" },
-        token: `admin-${Date.now()}`,
+        token: `admin:${ADMIN_EMAIL}:${Date.now()}`,
       });
     }
     
@@ -67,7 +75,7 @@ app.post(`${PREFIX}/auth/login`, async (c) => {
     return c.json({
       success: true,
       user: { email: user.email, name: user.name, isAdmin: false, avatar: user.avatar || '😀' },
-      token: `user-${Date.now()}`,
+      token: `user:${user.email}:${Date.now()}`,
     });
   } catch (error) {
     return c.json({ error: 'Internal server error' }, 500);
@@ -89,6 +97,23 @@ app.post(`${PREFIX}/projects`, async (c) => {
   try {
     const body = await c.req.json();
     const projectId = body.id || `project-${Date.now()}`;
+    const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
+    const user = getUserFromToken(token);
+    
+    // Check if project exists
+    const existingData = await kv.get(`project:${projectId}`);
+    const existingProject = parseKvItem(existingData);
+    
+    if (existingProject) {
+      // Check permission to update
+      const isAdmin = user?.isAdmin || false;
+      const isCreator = user && user.email === existingProject.creatorEmail;
+      
+      if (!isAdmin && !isCreator) {
+        return c.json({ error: 'Unauthorized to update this project' }, 403);
+      }
+    }
+    
     await kv.set(`project:${projectId}`, JSON.stringify({ ...body, id: projectId, updatedAt: Date.now() }));
     return c.json({ success: true, projectId });
   } catch (error) {
@@ -100,7 +125,15 @@ app.get(`${PREFIX}/projects/:id`, async (c) => {
   try {
     const data = await kv.get(`project:${c.req.param('id')}`);
     const project = parseKvItem(data);
-    return project ? c.json({ success: true, project }) : c.json({ error: 'Not found' }, 404);
+    
+    if (project) {
+      // Increment views
+      project.views = (project.views || 0) + 1;
+      await kv.set(`project:${project.id}`, JSON.stringify(project));
+      return c.json({ success: true, project });
+    }
+    
+    return c.json({ error: 'Not found' }, 404);
   } catch (error) {
     return c.json({ error: 'Internal server error' }, 500);
   }
@@ -109,7 +142,22 @@ app.get(`${PREFIX}/projects/:id`, async (c) => {
 app.delete(`${PREFIX}/projects/:id`, async (c) => {
   try {
     const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
-    if (!token || !token.startsWith('admin-')) return c.json({ error: 'Unauthorized' }, 401);
+    const user = getUserFromToken(token);
+    
+    if (!user) return c.json({ error: 'Unauthorized' }, 401);
+    
+    const data = await kv.get(`project:${c.req.param('id')}`);
+    const project = parseKvItem(data);
+    
+    if (!project) return c.json({ error: 'Project not found' }, 404);
+    
+    const isAdmin = user.isAdmin || false;
+    const isCreator = user.email === project.creatorEmail;
+    
+    if (!isAdmin && !isCreator) {
+      return c.json({ error: 'Unauthorized to delete this project' }, 403);
+    }
+    
     await kv.del(`project:${c.req.param('id')}`);
     return c.json({ success: true });
   } catch (error) {
@@ -130,7 +178,8 @@ app.get(`${PREFIX}/ads`, async (c) => {
 app.post(`${PREFIX}/ads`, async (c) => {
   try {
     const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
-    if (!token || !token.startsWith('admin-')) return c.json({ error: 'Unauthorized' }, 401);
+    const user = getUserFromToken(token);
+    if (!user || !user.isAdmin) return c.json({ error: 'Unauthorized' }, 401);
     const body = await c.req.json();
     await kv.set('global:ads', JSON.stringify(body.ads));
     return c.json({ success: true });
@@ -173,7 +222,8 @@ app.post(`${PREFIX}/bug-report`, async (c) => {
 app.get(`${PREFIX}/admin/analytics`, async (c) => {
   try {
     const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
-    if (!token || !token.startsWith('admin-')) return c.json({ error: 'Unauthorized' }, 401);
+    const user = getUserFromToken(token);
+    if (!user || !user.isAdmin) return c.json({ error: 'Unauthorized' }, 401);
     const visits = (await kv.getByPrefix('visit:')).map(parseKvItem).filter(Boolean);
     return c.json({ success: true, stats: { totalVisits: visits.length }, recentVisits: visits.slice(-50) });
   } catch (error) {
@@ -184,7 +234,8 @@ app.get(`${PREFIX}/admin/analytics`, async (c) => {
 app.get(`${PREFIX}/admin/messages`, async (c) => {
   try {
     const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
-    if (!token || !token.startsWith('admin-')) return c.json({ error: 'Unauthorized' }, 401);
+    const user = getUserFromToken(token);
+    if (!user || !user.isAdmin) return c.json({ error: 'Unauthorized' }, 401);
     const contacts = (await kv.getByPrefix('contact:')).map(parseKvItem).filter(Boolean);
     const bugs = (await kv.getByPrefix('bug:')).map(parseKvItem).filter(Boolean);
     return c.json({ success: true, contacts, bugs });

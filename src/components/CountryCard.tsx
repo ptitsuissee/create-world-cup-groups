@@ -8,16 +8,18 @@ interface CountryCardProps {
   country: Country;
   onDelete: (countryId: string) => void;
   translations: Translations;
+  isReadOnly?: boolean;
 }
 
-export function CountryCard({ country, onDelete, translations }: CountryCardProps) {
+export function CountryCard({ country, onDelete, translations, isReadOnly }: CountryCardProps) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'country',
     item: { id: country.id },
+    canDrag: !isReadOnly,
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
-  }), [country.id]);
+  }), [country.id, isReadOnly]);
 
   // Check if flag is a URL (http/https or base64 data URL) or an emoji
   const isUrl = country.flag.startsWith('http://') || 
@@ -50,14 +52,16 @@ export function CountryCard({ country, onDelete, translations }: CountryCardProp
         <span className="text-xl md:text-2xl leading-none flex-shrink-0">{country.flag}</span>
       )}
       <span className="tracking-wide pr-1 text-sm md:text-base truncate">{country.name}</span>
-      <button
-        className="absolute -top-1.5 -right-1.5 opacity-0 group-hover:opacity-100 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-lg transition-all hover:scale-110 active:scale-95"
-        onClick={handleDelete}
-        title={translations.deleteTeam}
-      >
-        <X size={12} className="md:hidden" />
-        <X size={14} className="hidden md:block" />
-      </button>
+      {!isReadOnly && (
+        <button
+          className="absolute -top-1.5 -right-1.5 opacity-0 group-hover:opacity-100 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-lg transition-all hover:scale-110 active:scale-95"
+          onClick={handleDelete}
+          title={translations.deleteTeam}
+        >
+          <X size={12} className="md:hidden" />
+          <X size={14} className="hidden md:block" />
+        </button>
+      )}
     </div>
   );
 }

@@ -200,12 +200,9 @@ function App() {
       fetchProjects();
     }
   }, [showProjectsGallery]);
-  const [savedProjects, setSavedProjects] = useState<
-    ProjectMetadata[]
-  >([]);
-  const [currentProjectId, setCurrentProjectId] = useState<
-    string | null
-  >(null);
+  const [savedProjects, setSavedProjects] = useState<ProjectMetadata[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [currentProjectName, setCurrentProjectName] =
     useState<string>("");
   const [showSaveProjectModal, setShowSaveProjectModal] =
@@ -246,24 +243,40 @@ function App() {
   const [showAdminMessagesPanel, setShowAdminMessagesPanel] =
     useState(false);
 
-  const t = translations[language];
+  const t = translations[language] || translations['fr'];
 
-  const API_BASE = `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882/make-server-92e03882`;
+  const API_BASE = `https://${supabaseProjectId}.supabase.co/functions/v1/make-server-92e03882`;
 
   // Fetch projects from server
   const fetchProjects = async () => {
+    setIsLoadingProjects(true);
     try {
       const response = await fetch(`${API_BASE}/projects`, {
         headers: {
           Authorization: `Bearer ${publicAnonKey}`,
         },
       });
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const result = await response.json();
       if (result.success) {
-        setSavedProjects(result.projects || []);
+        const projects = result.projects || [];
+        setSavedProjects(projects);
+        // Backup to localStorage
+        localStorage.setItem("matchdraw_projects_cache", JSON.stringify(projects));
       }
     } catch (error) {
       console.error("Error fetching projects:", error);
+      // Try to load from cache if server fails
+      const cached = localStorage.getItem("matchdraw_projects_cache");
+      if (cached) {
+        try {
+          setSavedProjects(JSON.parse(cached));
+        } catch (e) {
+          console.error("Error parsing cached projects:", e);
+        }
+      }
+    } finally {
+      setIsLoadingProjects(false);
     }
   };
 
@@ -340,6 +353,16 @@ function App() {
       setUserName(name || email.split('@')[0]);
       setUserAvatar(avatar || "😀");
       setIsAdmin(isAdminStored);
+    }
+
+    // Try to load projects from local cache first for instant feedback
+    const cachedProjects = localStorage.getItem("matchdraw_projects_cache");
+    if (cachedProjects) {
+      try {
+        setSavedProjects(JSON.parse(cachedProjects));
+      } catch (e) {
+        console.error("Error parsing local project cache", e);
+      }
     }
 
     fetchProjects();
@@ -1013,7 +1036,7 @@ function App() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${publicAnonKey}`,
+          Authorization: `Bearer ${localStorage.getItem("auth_token") || publicAnonKey}`,
         },
         body: JSON.stringify({
           id: projectId,
@@ -1176,9 +1199,18 @@ function App() {
     });
   };
 
-  // Delete a project (admin only)
+  // Delete a project (admin or creator only)
   const handleDeleteProject = async (projectId: string) => {
-    if (!isAdmin) return;
+    const projectToDelete = savedProjects.find(p => p.id === projectId);
+    const isCreator = projectToDelete && projectToDelete.creatorEmail === userEmail;
+    
+    if (!isAdmin && !isCreator) {
+      setToast({
+        message: "Seul le créateur ou l'administrateur peut supprimer ce projet",
+        type: "error",
+      });
+      return;
+    }
 
     try {
       const response = await fetch(
@@ -1192,7 +1224,8 @@ function App() {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to delete project from server');
+        const result = await response.json();
+        throw new Error(result.error || 'Failed to delete project from server');
       }
 
       // Remove from projects list
@@ -1228,74 +1261,90 @@ function App() {
   // If we're in matches view, render that component
   if (currentView === "matches") {
     return (
-      <MatchesView
-        groups={groups}
-        matches={matches}
-        onMatchesChange={setMatches}
-        onBackToSetup={() => setCurrentView("setup")}
-        onRenameTeam={handleRenameTeam}
-        language={language}
-        onLanguageChange={setLanguage}
-        tournamentSettings={tournamentSettings}
-        onTournamentSettingsChange={(settings) => {
-          setTournamentSettings(settings);
-          setToast({
-            message: t.settingsSaved,
-            type: "success",
-          });
-        }}
-        infoMessages={infoMessages}
-        onInfoMessagesChange={setInfoMessages}
-        onViewKnockout={() => setCurrentView("knockout")}
-        onSaveProject={handleSaveCurrentProject}
-        userName={userName}
-        userEmail={userEmail}
-        isAdmin={isAdmin}
-        onLogout={handleLogout}
-        onOpenSettings={() => setShowUserSettingsModal(true)}
-        onOpenAdManager={() => setShowAdManagerModal(true)}
-        onOpenMessages={() => setShowAdminMessagesPanel(true)}
-        ads={ads}
-      />
+      <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-gray-50 relative overflow-x-hidden">
+        <AdSpace position="left" ads={ads} />
+        <AdSpace position="right" ads={ads} />
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <BannerAd ads={ads} position="top" />
+          <MatchesView
+            groups={groups}
+            matches={matches}
+            onMatchesChange={setMatches}
+            onBackToSetup={() => setCurrentView("setup")}
+            onRenameTeam={handleRenameTeam}
+            language={language}
+            onLanguageChange={setLanguage}
+            tournamentSettings={tournamentSettings}
+            onTournamentSettingsChange={(settings) => {
+              setTournamentSettings(settings);
+              setToast({
+                message: t.settingsSaved,
+                type: "success",
+              });
+            }}
+            infoMessages={infoMessages}
+            onInfoMessagesChange={setInfoMessages}
+            onViewKnockout={() => setCurrentView("knockout")}
+            onSaveProject={handleSaveCurrentProject}
+            userName={userName}
+            userEmail={userEmail}
+            isAdmin={isAdmin}
+            onLogout={handleLogout}
+            onOpenSettings={() => setShowUserSettingsModal(true)}
+            onOpenAdManager={() => setShowAdManagerModal(true)}
+            onOpenMessages={() => setShowAdminMessagesPanel(true)}
+            ads={ads}
+          />
+          <BannerAd ads={ads} position="bottom" />
+        </div>
+      </div>
     );
   }
 
   // If we're in knockout view, render that component
   if (currentView === "knockout") {
     return (
-      <KnockoutView
-        groups={groups}
-        knockoutMatches={knockoutMatches}
-        onKnockoutMatchesChange={setKnockoutMatches}
-        onBackToGroups={() => setCurrentView("matches")}
-        infoMessages={knockoutInfoMessages}
-        onInfoMessagesChange={setKnockoutInfoMessages}
-        translations={t}
-        onSaveProject={handleSaveCurrentProject}
-        language={language}
-        onOpenContact={() => setShowContactModal(true)}
-        onOpenBugReport={() => setShowBugReportModal(true)}
-        userName={userName}
-        userEmail={userEmail}
-        isAdmin={isAdmin}
-        onLogout={handleLogout}
-        onOpenSettings={() => setShowUserSettingsModal(true)}
-        onOpenAdManager={() => setShowAdManagerModal(true)}
-        onOpenMessages={() => setShowAdminMessagesPanel(true)}
-        ads={ads}
-      />
+      <div className="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 text-gray-50 relative overflow-x-hidden">
+        <AdSpace position="left" ads={ads} />
+        <AdSpace position="right" ads={ads} />
+        <div className="max-w-[1800px] mx-auto px-4 relative z-10">
+          <BannerAd ads={ads} position="top" />
+          <KnockoutView
+            groups={groups}
+            knockoutMatches={knockoutMatches}
+            onKnockoutMatchesChange={setKnockoutMatches}
+            onBackToGroups={() => setCurrentView("matches")}
+            infoMessages={knockoutInfoMessages}
+            onInfoMessagesChange={setKnockoutInfoMessages}
+            translations={t}
+            onSaveProject={handleSaveCurrentProject}
+            language={language}
+            onOpenContact={() => setShowContactModal(true)}
+            onOpenBugReport={() => setShowBugReportModal(true)}
+            userName={userName}
+            userEmail={userEmail}
+            isAdmin={isAdmin}
+            onLogout={handleLogout}
+            onOpenSettings={() => setShowUserSettingsModal(true)}
+            onOpenAdManager={() => setShowAdManagerModal(true)}
+            onOpenMessages={() => setShowAdminMessagesPanel(true)}
+            ads={ads}
+          />
+          <BannerAd ads={ads} position="bottom" />
+        </div>
+      </div>
     );
   }
 
   return (
     <TouchDndProvider>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-gray-50 p-6 relative">
-        {/* Ad Spaces */}
+      <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-gray-50 p-6 relative overflow-x-hidden">
+        {/* Ad Spaces - Left and Right */}
         <AdSpace position="left" ads={ads} />
         <AdSpace position="right" ads={ads} />
 
-        <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-6">
-          {/* Top Banner Ad */}
+        <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-6 relative z-10">
+          {/* Top Banner Ad - Always visible as per request */}
           <BannerAd ads={ads} position="top" />
 
           {/* Header */}
@@ -1388,7 +1437,7 @@ function App() {
             </div>
 
             {/* Logo and Title - with padding to avoid overlap */}
-            <div className="flex flex-col items-center gap-3 sm:gap-6 pt-16 sm:pt-0 px-2 relative z-10">
+            <div className="flex flex-col items-center gap-3 sm:gap-6 pt-24 sm:pt-6 px-2 relative z-10">
               <div className="relative group">
                 <Logo size={80} className="sm:w-24 sm:h-24 w-16 h-16 drop-shadow-[0_0_25px_rgba(255,255,255,0.4)] transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" />
                 <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-gradient-to-br from-yellow-400 to-orange-500 text-white text-[8px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full shadow-lg transform rotate-12">
@@ -1417,16 +1466,19 @@ function App() {
           </div>
 
           {/* Featured Projects / Events Section */}
-          <FeaturedProjects
-            projects={savedProjects}
-            isAdmin={isAdmin}
-            onToggleFeatured={handleToggleFeatured}
-            onViewAllProjects={() =>
-              setShowProjectsGallery(true)
-            }
-            onLoadProject={handleLoadSavedProject}
-            translations={t}
-          />
+          <div className="relative z-0">
+            <FeaturedProjects
+              projects={savedProjects}
+              isAdmin={isAdmin}
+              isLoading={isLoadingProjects}
+              onToggleFeatured={handleToggleFeatured}
+              onViewAllProjects={() =>
+                setShowProjectsGallery(true)
+              }
+              onLoadProject={handleLoadSavedProject}
+              translations={t}
+            />
+          </div>
 
           {/* Middle Banner Ad */}
           <BannerAd ads={ads} position="middle" />
@@ -1467,134 +1519,136 @@ function App() {
           )}
 
           {/* Settings Panel */}
-          <section className="bg-white/10 backdrop-blur-xl rounded-3xl p-4 sm:p-6 shadow-2xl border border-white/20">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
-                ⚙️
+          {!isReadOnly && (
+            <section className="bg-white/10 backdrop-blur-xl rounded-3xl p-4 sm:p-6 shadow-2xl border border-white/20">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-xl sm:text-2xl shadow-lg">
+                  ⚙️
+                </div>
+                <h2 className="text-xl sm:text-2xl">{t.creation}</h2>
               </div>
-              <h2 className="text-xl sm:text-2xl">{t.creation}</h2>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
-              {/* Group Form */}
-              <form
-                onSubmit={handleAddGroup}
-                className="space-y-3"
-              >
-                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
-                  <label className="block text-sm text-white/80 mb-2">
-                    🎯 {t.groupName}
-                  </label>
-                  <input
-                    type="text"
-                    value={groupNameInput}
-                    onChange={(e) =>
-                      setGroupNameInput(e.target.value)
-                    }
-                    placeholder={t.groupNamePlaceholder}
-                    className="w-full rounded-xl border border-white/20 px-4 py-3 bg-white/10 text-white placeholder:text-white/40 outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/30 transition-all"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="w-full mt-3 rounded-xl px-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
-                  >
-                    ➕ {t.addGroup}
-                  </button>
-                </div>
-              </form>
-
-              {/* Country/Team Form */}
-              <form
-                onSubmit={handleAddCountry}
-                className="space-y-3"
-              >
-                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
-                  {/* Team Type Selector */}
-                  <label className="block text-sm text-white/80 mb-2">
-                    ⚽ {t.teamType}
-                  </label>
-                  <div className="flex gap-3 mb-4">
-                    <button
-                      type="button"
-                      onClick={() => setTeamType("country")}
-                      className={`flex-1 py-2.5 rounded-lg transition-all ${
-                        teamType === "country"
-                          ? "bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg scale-105"
-                          : "bg-white/10 hover:bg-white/20"
-                      }`}
-                    >
-                      🌍 {t.teamTypeCountry}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTeamType("club")}
-                      className={`flex-1 py-2.5 rounded-lg transition-all ${
-                        teamType === "club"
-                          ? "bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg scale-105"
-                          : "bg-white/10 hover:bg-white/20"
-                      }`}
-                    >
-                      🏆 {t.teamTypeClub}
-                    </button>
-                  </div>
-
-                  <label className="block text-sm text-white/80 mb-2">
-                    {teamType === "country" ? "🌍" : "🏆"}{" "}
-                    {t.teamName}
-                  </label>
-                  <input
-                    type="text"
-                    value={countryNameInput}
-                    onChange={(e) =>
-                      setCountryNameInput(e.target.value)
-                    }
-                    placeholder={t.teamNamePlaceholder}
-                    className="w-full rounded-xl border border-white/20 px-4 py-3 bg-white/10 text-white placeholder:text-white/40 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
-                    required
-                  />
-
-                  <div className="mt-3 space-y-2">
-                    <label className="block text-sm text-white/80">
-                      🏳️ {t.flag}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                {/* Group Form */}
+                <form
+                  onSubmit={handleAddGroup}
+                  className="space-y-3"
+                >
+                  <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+                    <label className="block text-sm text-white/80 mb-2">
+                      🎯 {t.groupName}
                     </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={countryFlagInput}
-                        onChange={(e) =>
-                          setCountryFlagInput(e.target.value)
-                        }
-                        placeholder={t.flagPlaceholder}
-                        className="flex-1 rounded-xl border border-white/20 px-4 py-2 bg-white/10 text-white placeholder:text-white/40 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
-                      />
-                      <label className="relative cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="hidden"
-                        />
-                        <div className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 hover:border-blue-400 transition-all flex items-center gap-2">
-                          📁{" "}
-                          <span className="text-sm">
-                            {t.import}
-                          </span>
-                        </div>
-                      </label>
-                    </div>
+                    <input
+                      type="text"
+                      value={groupNameInput}
+                      onChange={(e) =>
+                        setGroupNameInput(e.target.value)
+                      }
+                      placeholder={t.groupNamePlaceholder}
+                      className="w-full rounded-xl border border-white/20 px-4 py-3 bg-white/10 text-white placeholder:text-white/40 outline-none focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/30 transition-all"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      className="w-full mt-3 rounded-xl px-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    >
+                      ➕ {t.addGroup}
+                    </button>
                   </div>
+                </form>
 
-                  <button
-                    type="submit"
-                    className="w-full mt-3 rounded-xl px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
-                  >
-                    ➕ {t.addTeam}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </section>
+                {/* Country/Team Form */}
+                <form
+                  onSubmit={handleAddCountry}
+                  className="space-y-3"
+                >
+                  <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+                    {/* Team Type Selector */}
+                    <label className="block text-sm text-white/80 mb-2">
+                      ⚽ {t.teamType}
+                    </label>
+                    <div className="flex gap-3 mb-4">
+                      <button
+                        type="button"
+                        onClick={() => setTeamType("country")}
+                        className={`flex-1 py-2.5 rounded-lg transition-all ${
+                          teamType === "country"
+                            ? "bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg scale-105"
+                            : "bg-white/10 hover:bg-white/20"
+                        }`}
+                      >
+                        🌍 {t.teamTypeCountry}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTeamType("club")}
+                        className={`flex-1 py-2.5 rounded-lg transition-all ${
+                          teamType === "club"
+                            ? "bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg scale-105"
+                            : "bg-white/10 hover:bg-white/20"
+                        }`}
+                      >
+                        🏆 {t.teamTypeClub}
+                      </button>
+                    </div>
+
+                    <label className="block text-sm text-white/80 mb-2">
+                      {teamType === "country" ? "🌍" : "🏆"}{" "}
+                      {t.teamName}
+                    </label>
+                    <input
+                      type="text"
+                      value={countryNameInput}
+                      onChange={(e) =>
+                        setCountryNameInput(e.target.value)
+                      }
+                      placeholder={t.teamNamePlaceholder}
+                      className="w-full rounded-xl border border-white/20 px-4 py-3 bg-white/10 text-white placeholder:text-white/40 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
+                      required
+                    />
+
+                    <div className="mt-3 space-y-2">
+                      <label className="block text-sm text-white/80">
+                        🏳️ {t.flag}
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={countryFlagInput}
+                          onChange={(e) =>
+                            setCountryFlagInput(e.target.value)
+                          }
+                          placeholder={t.flagPlaceholder}
+                          className="flex-1 rounded-xl border border-white/20 px-4 py-2 bg-white/10 text-white placeholder:text-white/40 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30 transition-all"
+                        />
+                        <label className="relative cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                          />
+                          <div className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 hover:border-blue-400 transition-all flex items-center gap-2">
+                            📁{" "}
+                            <span className="text-sm">
+                              {t.import}
+                            </span>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full mt-3 rounded-xl px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    >
+                      ➕ {t.addTeam}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </section>
+          )}
 
           {/* Save & Share Project Buttons */}
           <section className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-xl rounded-3xl p-6 shadow-2xl border border-green-400/30">
@@ -1614,15 +1668,17 @@ function App() {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                <button
-                  onClick={handleSaveCurrentProject}
-                  className="px-6 sm:px-8 py-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
-                >
-                  <Save size={20} />
-                  <span>
-                    {currentProjectName ? t.update : t.save}
-                  </span>
-                </button>
+                {!isReadOnly && (
+                  <button
+                    onClick={handleSaveCurrentProject}
+                    className="px-6 sm:px-8 py-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Save size={20} />
+                    <span>
+                      {currentProjectName ? t.update : t.save}
+                    </span>
+                  </button>
+                )}
                 {currentProjectId && (
                   <button
                     onClick={() => setShowShareModal(true)}
@@ -1637,7 +1693,7 @@ function App() {
           </section>
 
           {/* Random Draw Button */}
-          {unassignedCountries.length > 0 &&
+          {!isReadOnly && unassignedCountries.length > 0 &&
             groups.length > 0 && (
               <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-xl rounded-3xl p-4 sm:p-6 shadow-2xl border border-green-400/30">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -1677,6 +1733,7 @@ function App() {
               }
               onDelete={handleDeleteCountry}
               translations={t}
+              isReadOnly={isReadOnly}
             />
 
             {/* Groups */}
@@ -1708,6 +1765,7 @@ function App() {
                       onDeleteGroup={handleDeleteGroup}
                       onRename={handleRenameGroup}
                       translations={t}
+                      isReadOnly={isReadOnly}
                     />
                   ))}
                 </div>
@@ -1946,6 +2004,10 @@ function App() {
         </div>
 
         {/* Footer with Contact & Bug Report buttons */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-12 pb-24">
+          <BannerAd ads={ads} position="bottom" />
+        </div>
+
         <Footer
           language={language}
           onOpenContact={() => setShowContactModal(true)}

@@ -39,6 +39,7 @@ interface MatchesViewProps {
   onOpenAdManager?: () => void;
   onOpenMessages?: () => void;
   ads?: AdItem[];
+  isReadOnly?: boolean;
 }
 
 export function MatchesView({
@@ -63,6 +64,7 @@ export function MatchesView({
   onOpenAdManager,
   onOpenMessages,
   ads,
+  isReadOnly,
 }: MatchesViewProps) {
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(
@@ -183,11 +185,7 @@ export function MatchesView({
   const hasMatches = groupMatches.length > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-gray-50 p-3 sm:p-6 relative">
-      {/* Ad Spaces */}
-      <AdSpace position="left" ads={ads || []} />
-      <AdSpace position="right" ads={ads || []} />
-
+    <div className="min-h-screen p-3 sm:p-6 relative">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="relative space-y-4 py-2 sm:py-8">

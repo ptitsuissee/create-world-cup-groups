@@ -152,11 +152,7 @@ export function KnockoutView({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 text-gray-50 p-3 sm:p-6 relative">
-      {/* Ad Spaces */}
-      <AdSpace position="left" ads={ads || []} />
-      <AdSpace position="right" ads={ads || []} />
-
+    <div className="min-h-screen p-3 sm:p-6 relative">
       <div className="max-w-[1800px] mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="relative space-y-4 py-2 sm:py-8">

@@ -9,11 +9,13 @@ interface UnassignedZoneProps {
   onDrop: (countryId: string) => void;
   onDelete: (countryId: string) => void;
   translations: Translations;
+  isReadOnly?: boolean;
 }
 
-export function UnassignedZone({ countries, onDrop, onDelete, translations }: UnassignedZoneProps) {
+export function UnassignedZone({ countries, onDrop, onDelete, translations, isReadOnly }: UnassignedZoneProps) {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'country',
+    canDrop: () => !isReadOnly,
     drop: (item: { id: string }) => {
       console.log('Dropping item:', item.id);
       onDrop(item.id);
@@ -51,7 +53,7 @@ export function UnassignedZone({ countries, onDrop, onDelete, translations }: Un
           </div>
         ) : (
           countries.map((country) => (
-            <CountryCard key={country.id} country={country} onDelete={onDelete} translations={translations} />
+            <CountryCard key={country.id} country={country} onDelete={onDelete} translations={translations} isReadOnly={isReadOnly} />
           ))
         )}
       </div>

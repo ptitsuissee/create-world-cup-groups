@@ -95,7 +95,7 @@ export function AnalyticsDashboard({
       console.log("Loading analytics with token:", token?.substring(0, 10) + "...");
       
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-92e03882/make-server-92e03882/admin/analytics`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-92e03882/admin/analytics`,
         {
           method: "GET",
           headers: {

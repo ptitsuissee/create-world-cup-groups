@@ -50,7 +50,7 @@ export function BugReportModal({ isOpen, onClose, language, onShowToast }: BugRe
     
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-92e03882/make-server-92e03882/bug-report`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-92e03882/bug-report`,
         {
           method: 'POST',
           headers: {
