@@ -3176,8 +3176,8 @@
     padding-top: calc(var(--spacing) * 6);
   }
 
-  .pt-24 {
-    padding-top: calc(var(--spacing) * 24);
+  .pt-28 {
+    padding-top: calc(var(--spacing) * 28);
   }
 
   .pr-1 {
@@ -5586,6 +5586,12 @@
   }
 
   @media (width >= 64rem) {
+    .lg\:block {
+      display: block;
+    }
+  }
+
+  @media (width >= 64rem) {
     .lg\:inline {
       display: inline;
     }
@@ -5642,12 +5648,6 @@
   @media (width >= 80rem) {
     .xl\:grid-cols-\[320px_1fr\] {
       grid-template-columns: 320px 1fr;
-    }
-  }
-
-  @media (width >= 96rem) {
-    .\32 xl\:block {
-      display: block;
     }
   }
 

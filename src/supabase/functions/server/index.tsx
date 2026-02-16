@@ -50,12 +50,25 @@ const parseKvItem = (data: any) => {
   }
 };
 
-// Utility to get user from token
+// Utility to get user from token with basic verification
 const getUserFromToken = (token?: string) => {
   if (!token) return null;
-  const [type, email, timestamp] = token.split(':');
-  if (!type || !email) return null;
-  return { type, email, isAdmin: type === 'admin' };
+  const parts = token.split(':');
+  if (parts.length < 3) return null;
+  
+  const [type, email, timestamp] = parts;
+  const ADMIN_EMAIL = "suppmatchdrawpro@outlook.com";
+  
+  // Basic security: if it's an admin token, it MUST be the admin email
+  if (type === 'admin' && email.toLowerCase() !== ADMIN_EMAIL.toLowerCase() && email.toLowerCase() !== 'lessuisse') {
+    return null;
+  }
+  
+  return { 
+    type, 
+    email, 
+    isAdmin: type === 'admin' && (email.toLowerCase() === ADMIN_EMAIL.toLowerCase() || email.toLowerCase() === 'lessuisse')
+  };
 };
 
 // Routes - Mandatory prefix as per instructions
@@ -74,7 +87,10 @@ const loginHandler = async (c: any) => {
     const ADMIN_EMAIL = "suppmatchdrawpro@outlook.com";
     const ADMIN_PASSWORD = "MatchDraw2024Admin!";
     
-    if ((email.toLowerCase() === ADMIN_EMAIL.toLowerCase() || email.toLowerCase() === "lessuisse") && password === ADMIN_PASSWORD) {
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    if ((normalizedEmail === ADMIN_EMAIL.toLowerCase() || normalizedEmail === "lessuisse") && password === ADMIN_PASSWORD) {
       return c.json({
         success: true,
         user: { email: ADMIN_EMAIL, name: "LesSuisse", isAdmin: true, avatar: "👑" },
@@ -82,9 +98,9 @@ const loginHandler = async (c: any) => {
       });
     }
     
-    const userData = await kv.get(`user:${sanitizeInput(email)}`);
+    const userData = await kv.get(`user:${sanitizeInput(normalizedEmail)}`);
     const user = parseKvItem(userData);
-    if (!user || user.password !== password) return c.json({ error: 'Invalid credentials' }, 401);
+    if (!user || user.password !== password) return c.json({ error: 'Identifiants invalides' }, 401);
     
     return c.json({
       success: true,
@@ -95,8 +111,42 @@ const loginHandler = async (c: any) => {
     return c.json({ error: 'Internal server error' }, 500);
   }
 };
+
+const signupHandler = async (c: any) => {
+  try {
+    const { email, password, name } = await c.req.json();
+    if (!email || !password || !name) return c.json({ error: 'Champs manquants' }, 400);
+    
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    // Check if user exists
+    const existing = await kv.get(`user:${sanitizeInput(normalizedEmail)}`);
+    if (existing) return c.json({ error: 'Cet email est déjà utilisé' }, 409);
+    
+    const newUser = {
+      email: normalizedEmail,
+      password, // In a real app, hash this!
+      name: sanitizeInput(name),
+      avatar: '😀',
+      createdAt: Date.now()
+    };
+    
+    await kv.set(`user:${sanitizeInput(normalizedEmail)}`, JSON.stringify(newUser));
+    
+    return c.json({
+      success: true,
+      user: { email: newUser.email, name: newUser.name, isAdmin: false, avatar: newUser.avatar },
+      token: `user:${newUser.email}:${Date.now()}`,
+    });
+  } catch (error) {
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+};
+
 app.post("/auth/login", loginHandler);
 app.post(`${PREFIX}/auth/login`, loginHandler);
+app.post("/auth/signup", signupHandler);
+app.post(`${PREFIX}/auth/signup`, signupHandler);
 
 // Projects
 const getProjectsHandler = async (c: any) => {
@@ -276,7 +326,17 @@ app.post(`${PREFIX}/ads`, saveAdsHandler);
 app.post(`${PREFIX}/analytics/track-visit`, async (c) => {
   try {
     const body = await c.req.json();
-    await kv.set(`visit:${Date.now()}`, JSON.stringify(body));
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    await kv.set(`visit:${id}`, JSON.stringify({ ...body, timestamp: Date.now() }));
+    return c.json({ success: true });
+  } catch { return c.json({ success: false }); }
+});
+
+app.post(`${PREFIX}/analytics/track-interaction`, async (c) => {
+  try {
+    const body = await c.req.json();
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    await kv.set(`interaction:${id}`, JSON.stringify({ ...body, timestamp: Date.now() }));
     return c.json({ success: true });
   } catch { return c.json({ success: false }); }
 });
@@ -285,7 +345,8 @@ app.post(`${PREFIX}/analytics/track-visit`, async (c) => {
 app.post(`${PREFIX}/contact`, async (c) => {
   try {
     const body = await c.req.json();
-    await kv.set(`contact:${Date.now()}`, JSON.stringify(body));
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    await kv.set(`contact:${id}`, JSON.stringify(body));
     return c.json({ success: true });
   } catch (error) {
     return c.json({ error: 'Internal server error' }, 500);
@@ -295,7 +356,8 @@ app.post(`${PREFIX}/contact`, async (c) => {
 app.post(`${PREFIX}/bug-report`, async (c) => {
   try {
     const body = await c.req.json();
-    await kv.set(`bug:${Date.now()}`, JSON.stringify(body));
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+    await kv.set(`bug:${id}`, JSON.stringify(body));
     return c.json({ success: true });
   } catch (error) {
     return c.json({ error: 'Internal server error' }, 500);

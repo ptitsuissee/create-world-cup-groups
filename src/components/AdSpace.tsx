@@ -18,7 +18,7 @@ export function AdSpace({ position, ads }: AdSpaceProps) {
 
   return (
     <div
-      className={`hidden 2xl:block fixed top-24 ${
+      className={`hidden lg:block fixed top-24 ${
         position === 'left' ? 'left-4' : 'right-4'
       } w-[160px] space-y-4 z-40 animate-in fade-in slide-in-from-${position === 'left' ? 'left' : 'right'}-10 duration-700`}
     >

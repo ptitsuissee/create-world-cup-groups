@@ -1482,7 +1482,7 @@ function App() {
             </div>
 
             {/* Logo and Title - with padding to avoid overlap */}
-            <div className="flex flex-col items-center gap-3 sm:gap-6 pt-24 sm:pt-6 px-2 relative z-10">
+            <div className="flex flex-col items-center gap-3 sm:gap-6 pt-28 sm:pt-6 px-2 relative z-10">
               <div className="relative group">
                 <Logo size={80} className="sm:w-24 sm:h-24 w-16 h-16 drop-shadow-[0_0_25px_rgba(255,255,255,0.4)] transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" />
                 <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-gradient-to-br from-yellow-400 to-orange-500 text-white text-[8px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full shadow-lg transform rotate-12">
