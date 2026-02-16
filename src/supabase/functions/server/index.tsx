@@ -100,15 +100,31 @@ app.post(`${PREFIX}/auth/login`, loginHandler);
 
 // Projects
 const getProjectsHandler = async (c: any) => {
+  console.log('[SERVER] Fetching all projects...');
   try {
-    const rawProjects = await kv.getByPrefix('project:');
+    // Search for both "project:" and "project-" prefixes to be safe with older versions
+    const rawProjects = await kv.getByPrefix('project');
+    console.log(`[SERVER] Found ${rawProjects?.length || 0} raw project entries`);
+    
     const projects = (rawProjects || [])
       .map(item => parseKvItem(item))
-      .filter(p => p && p.id);
+      .filter(p => {
+        const isValid = p && (p.id || p.projectId);
+        if (p && !p.id && p.projectId) p.id = p.projectId; // Alias for compatibility
+        return isValid;
+      })
+      .map(p => ({
+        ...p,
+        views: p.views || 0,
+        isFeatured: !!p.isFeatured,
+        updatedAt: p.updatedAt || p.createdAt || Date.now()
+      }));
+
+    console.log(`[SERVER] Returning ${projects.length} valid projects`);
     return c.json({ success: true, projects });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[SERVER] Projects error:', error);
-    return c.json({ error: 'Internal server error' }, 500);
+    return c.json({ error: 'Internal server error', details: error.message, success: false }, 500);
   }
 };
 app.get("/projects", getProjectsHandler);
@@ -117,23 +133,44 @@ app.get(`${PREFIX}/projects`, getProjectsHandler);
 const saveProjectHandler = async (c: any) => {
   try {
     const body = await c.req.json();
-    const projectId = body.id || `project-${Date.now()}`;
+    const projectId = body.id || body.projectId || `project-${Date.now()}`;
     const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
     const user = getUserFromToken(token);
+    
+    console.log(`[SERVER] Save request for project ${projectId} by ${user?.email || 'anonymous'}`);
     
     const existingData = await kv.get(`project:${projectId}`);
     const existingProject = parseKvItem(existingData);
     
     if (existingProject) {
       const isAdmin = user?.isAdmin || false;
-      const isCreator = user && user.email === existingProject.creatorEmail;
-      if (!isAdmin && !isCreator) return c.json({ error: 'Unauthorized' }, 403);
+      // Case-insensitive email comparison for better reliability
+      const isCreator = user && existingProject.creatorEmail && 
+                        user.email.toLowerCase() === existingProject.creatorEmail.toLowerCase();
+      
+      if (!isAdmin && !isCreator) {
+        console.warn(`[SERVER] Unauthorized save attempt for ${projectId}`);
+        return c.json({ error: 'Seul le créateur ou un admin peut modifier ce projet', success: false }, 403);
+      }
     }
     
-    await kv.set(`project:${projectId}`, JSON.stringify({ ...body, id: projectId, updatedAt: Date.now() }));
+    // Don't save the token inside the DB object
+    const { token: _, ...projectToSave } = body;
+    const finalData = { 
+      ...projectToSave, 
+      id: projectId, 
+      updatedAt: Date.now(),
+      creatorEmail: body.creatorEmail || user?.email || existingProject?.creatorEmail
+    };
+    
+    // Pass object directly, kv.set handles serialization or JSONB storage
+    await kv.set(`project:${projectId}`, finalData);
+    
+    console.log(`[SERVER] Project ${projectId} saved successfully`);
     return c.json({ success: true, projectId });
-  } catch (error) {
-    return c.json({ error: 'Internal server error' }, 500);
+  } catch (error: any) {
+    console.error('[SERVER] Save project error:', error);
+    return c.json({ error: 'Erreur serveur lors de la sauvegarde', details: error.message, success: false }, 500);
   }
 };
 app.post("/projects", saveProjectHandler);

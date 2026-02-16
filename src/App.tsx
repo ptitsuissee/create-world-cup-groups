@@ -270,11 +270,12 @@ function App() {
       
       if (result.success && Array.isArray(result.projects)) {
         const projects = result.projects
-          .filter((p: any) => p && p.id)
+          .filter((p: any) => p && (p.id || p.projectId))
+          .map((p: any) => ({ ...p, id: p.id || p.projectId }))
           .sort((a: any, b: any) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
           
+        setSavedProjects(projects);
         if (projects.length > 0) {
-          setSavedProjects(projects);
           localStorage.setItem("matchdraw_projects_cache", JSON.stringify(projects));
         }
       }
@@ -1054,8 +1055,9 @@ function App() {
 
       const result = await response.json();
       if (!response.ok) {
+        console.error("[APP] Save failed:", result);
         throw new Error(
-          result.error || "Failed to save project to server",
+          result.error || result.details || "Failed to save project to server",
         );
       }
 
