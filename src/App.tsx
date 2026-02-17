@@ -986,6 +986,7 @@ function App() {
 
   // Show save project modal
   const handleSaveCurrentProject = () => {
+    console.log("[DEBUG] Click Save Project - Auth:", isAuthenticated);
     if (!isAuthenticated) {
       setToast({
         message: t.loginRequired || "Connexion requise",
@@ -1001,35 +1002,37 @@ function App() {
 
   // Save project with name
   const handleSaveProjectWithName = async (projectName: string) => {
-    const projectId =
-      currentProjectId ||
-      `project-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    const now = Date.now();
-
-    const userToken = localStorage.getItem("auth_token") || "";
-    const projectData = {
-      groups,
-      unassignedCountries,
-      matches,
-      knockoutMatches,
-    };
-
-    const newProject: ProjectMetadata = {
-      id: projectId,
-      name: projectName.trim(),
-      createdAt: existingProject?.createdAt || now,
-      updatedAt: now,
-      views: existingProject?.views || 0,
-      isFeatured: existingProject?.isFeatured || false,
-      creatorName: userName,
-      creatorEmail: userEmail,
-      groupsCount: groups.length,
-      teamsCount:
-        groups.reduce((acc, g) => acc + g.countries.length, 0) +
-        unassignedCountries.length,
-    };
-
     try {
+      const projectId =
+        currentProjectId ||
+        `project-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const now = Date.now();
+
+      const userToken = localStorage.getItem("auth_token") || "";
+      const projectData = {
+        groups,
+        unassignedCountries,
+        matches,
+        knockoutMatches,
+      };
+
+      const existingProject = savedProjects.find((p) => p.id === projectId);
+
+      const newProject: ProjectMetadata = {
+        id: projectId,
+        name: projectName.trim(),
+        createdAt: existingProject?.createdAt || now,
+        updatedAt: now,
+        views: existingProject?.views || 0,
+        isFeatured: existingProject?.isFeatured || false,
+        creatorName: userName,
+        creatorEmail: userEmail,
+        groupsCount: groups.length,
+        teamsCount:
+          groups.reduce((acc, g) => acc + g.countries.length, 0) +
+          unassignedCountries.length,
+      };
+
       // Save project data to server
       const response = await fetch(`${API_BASE}/projects`, {
         method: "POST",
@@ -1049,48 +1052,25 @@ function App() {
           isFeatured: newProject.isFeatured,
           views: newProject.views,
           createdAt: newProject.createdAt,
-          token: userToken, // Backwards compatibility for body token
+          token: userToken,
         }),
       });
 
       const result = await response.json();
       if (!response.ok) {
-        console.error("[APP] Save failed response:", response.status, result);
-        throw new Error(
-          result.error || result.details || "Erreur lors de la sauvegarde"
-        );
+        throw new Error(result.error || result.details || "Erreur sauvegarde");
       }
 
-      // Also save to localStorage for offline/backup
-      localStorage.setItem(
-        `matchdraw_project_${projectId}`,
-        JSON.stringify(projectData),
-      );
-
-      // Refresh project list from server
+      localStorage.setItem(`matchdraw_project_${projectId}`, JSON.stringify(projectData));
       await fetchProjects();
-
       setCurrentProjectId(projectId);
       setCurrentProjectName(projectName.trim());
       setShowSaveProjectModal(false);
       setToast({ message: t.projectSaved, type: "success" });
-
-      // Track interaction
-      trackInteraction(
-        "save_project",
-        { projectName: projectName.trim() },
-        {
-          userEmail: isAuthenticated ? userEmail : undefined,
-          userName: isAuthenticated ? userName : undefined,
-        },
-      );
-    } catch (error) {
-      console.error("Error saving project:", error);
-      setToast({
-        message:
-          t.errorSavingProject || "Erreur lors de la sauvegarde",
-        type: "error",
-      });
+      trackInteraction("project_save", { projectId });
+    } catch (error: any) {
+      console.error("[APP] Save error:", error);
+      setToast({ message: error.message || "Erreur de sauvegarde", type: "error" });
     }
   };
 
@@ -1120,10 +1100,7 @@ function App() {
 
       if (response.ok) {
         const result = await response.json();
-        console.log(`[APP] Server response:`, result);
-        
         if (result.success && result.project) {
-          // Robust data extraction: some projects might have data at root, others in .data
           data = result.project.data || {
             groups: result.project.groups,
             unassignedCountries: result.project.unassignedCountries,
@@ -1132,39 +1109,22 @@ function App() {
           };
           projectMeta = result.project;
         } else {
-          throw new Error("Format de réponse invalide ou projet manquant");
+          throw new Error("Format de réponse invalide");
         }
       } else {
-        console.warn(`[APP] Server error ${response.status}, falling back to localStorage`);
-        // Fallback to localStorage
-        const localData = localStorage.getItem(
-          `matchdraw_project_${projectId}`,
-        );
-        if (!localData) {
-          throw new Error("Project not found on server or locally");
-        }
+        const localData = localStorage.getItem(`matchdraw_project_${projectId}`);
+        if (!localData) throw new Error("Projet introuvable");
         data = JSON.parse(localData);
-        projectMeta = savedProjects.find(
-          (p) => p.id === projectId,
-        );
+        projectMeta = savedProjects.find((p) => p.id === projectId);
       }
 
-      if (!data || (!data.groups && !data.unassignedCountries)) {
-        console.error(`[APP] Invalid project data structure:`, data);
-        setToast({
-          message: t.projectNotFound || "Projet introuvable ou corrompu",
-          type: "error",
-        });
-        return;
-      }
+      if (!data) throw new Error("Données corrompues");
 
-      // Apply loaded data
       setGroups(data.groups || []);
       setUnassignedCountries(data.unassignedCountries || []);
       setMatches(data.matches || []);
       setKnockoutMatches(data.knockoutMatches || []);
       
-      // Update UI state
       setCurrentProjectId(projectId);
       if (currentView !== 'setup') setCurrentView('setup');
 
@@ -1174,20 +1134,22 @@ function App() {
         setProjectCreatorEmail(projectMeta.creatorEmail || "");
         setProjectCreatorAvatar(projectMeta.creatorAvatar || "😀");
 
-        // Check if user is creator or admin
-        const canEdit =
-          isAdmin ||
-          (isAuthenticated && userEmail === projectMeta.creatorEmail);
+        // Check permissions (case-insensitive)
+        const userEmailLower = (userEmail || "").toLowerCase().trim();
+        const creatorEmailLower = (projectMeta.creatorEmail || "").toLowerCase().trim();
+        
+        const canEdit = isAdmin || (isAuthenticated && userEmailLower === creatorEmailLower);
         setIsReadOnly(!canEdit);
+        console.log(`[APP] Permissions: isAdmin=${isAdmin}, isCreator=${userEmailLower === creatorEmailLower}, canEdit=${canEdit}`);
       } else {
-        setIsReadOnly(false); // Assume editable if no meta found
+        setIsReadOnly(false);
       }
 
       setToast({ message: t.projectLoaded, type: "success" });
     } catch (error: any) {
       console.error("Error loading project:", error);
       setToast({
-        message: `${t.errorLoadingProject || "Erreur lors du chargement"}: ${error.message || ""}`,
+        message: `${t.errorLoadingProject || "Erreur de chargement"}: ${error.message}`,
         type: "error",
       });
     }
@@ -1708,17 +1670,20 @@ function App() {
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                {!isReadOnly && (
-                  <button
-                    onClick={handleSaveCurrentProject}
-                    className="px-6 sm:px-8 py-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Save size={20} />
-                    <span>
-                      {currentProjectName ? t.update : t.save}
-                    </span>
-                  </button>
-                )}
+                <button
+                  onClick={handleSaveCurrentProject}
+                  className={`px-6 sm:px-8 py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${
+                    isReadOnly 
+                      ? "bg-white/10 text-white/50 cursor-not-allowed border border-white/10" 
+                      : "bg-gradient-to-r from-green-400 to-emerald-500 hover:shadow-xl hover:scale-105 active:scale-95 text-white"
+                  }`}
+                  disabled={isReadOnly && !isAdmin}
+                >
+                  <Save size={20} />
+                  <span>
+                    {isReadOnly && !isAdmin ? t.readOnlyMode : (currentProjectName ? t.update : t.save)}
+                  </span>
+                </button>
                 {currentProjectId && (
                   <button
                     onClick={() => setShowShareModal(true)}
