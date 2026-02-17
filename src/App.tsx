@@ -306,8 +306,8 @@ function App() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${publicAnonKey}`,
-          "X-Admin-Token": localStorage.getItem("auth_token") || "",
+          "Authorization": `Bearer ${publicAnonKey}`,
+          "X-MatchDraw-Token": localStorage.getItem("auth_token") || "",
         },
         body: JSON.stringify({ ads: updatedAds }),
       });
@@ -1046,7 +1046,7 @@ function App() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${userToken}`,
+          "Authorization": `Bearer ${publicAnonKey}`,
           "X-MatchDraw-Token": userToken,
         },
         body: JSON.stringify({
@@ -1208,7 +1208,8 @@ function App() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          "Authorization": `Bearer ${publicAnonKey}`,
+          "X-MatchDraw-Token": localStorage.getItem("auth_token") || "",
         },
         body: JSON.stringify({
           ...projectToToggle,
@@ -1255,7 +1256,8 @@ function App() {
         {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            "Authorization": `Bearer ${publicAnonKey}`,
+            "X-MatchDraw-Token": localStorage.getItem("auth_token") || "",
           },
         },
       );

@@ -11,17 +11,17 @@ const sanitizeInput = (input: string): string => {
   return input.replace(/[<>]/g, '').trim().slice(0, 10000);
 };
 
-// CORS - Must be first and handle everything
-app.use(
-  "*",
-  cors({
-    origin: "*",
-    allowHeaders: ["Content-Type", "Authorization", "X-Admin-Token", "X-MatchDraw-Token", "apikey"],
-    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    exposeHeaders: ["Content-Length"],
-    maxAge: 86400,
-  }),
-);
+    // CORS - Must be first and handle everything
+    app.use(
+      "*",
+      cors({
+        origin: "*",
+        allowHeaders: ["Content-Type", "Authorization", "X-Admin-Token", "X-MatchDraw-Token", "apikey"],
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        exposeHeaders: ["Content-Length"],
+        maxAge: 86400,
+      }),
+    );
 
 // Logger
 app.use('*', logger(console.log));
@@ -79,14 +79,14 @@ const getUserFromToken = (token?: string) => {
   // Robust admin check
   const isActuallyAdmin = 
     (type === 'admin') || 
-    (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) || 
-    (email.toLowerCase() === 'lessuisse');
+    (email && email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) || 
+    (email && email.toLowerCase() === 'lessuisse');
   
   console.log(`[AUTH] Parsed token: type=${type}, email=${email}, isAdmin=${isActuallyAdmin}`);
   
   return { 
     type, 
-    email: email.toLowerCase().trim(), 
+    email: (email || '').toLowerCase().trim(), 
     isAdmin: isActuallyAdmin
   };
 };
@@ -310,28 +310,35 @@ app.get(`${PREFIX}/projects/:id`, getProjectByIdHandler);
 
 const deleteProjectHandler = async (c: any) => {
   try {
-    const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
+    const token = c.req.header('x-matchdraw-token') || c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
     const user = getUserFromToken(token);
-    if (!user) return c.json({ error: 'Unauthorized' }, 401);
+    if (!user) {
+      console.log('[SERVER] Delete project DENIED: No user found from token');
+      return c.json({ error: 'Vous devez être connecté pour supprimer un projet', success: false }, 401);
+    }
     
-    const data = await kv.get(`project:${c.req.param('id')}`);
+    const projectId = c.req.param('id');
+    const data = await kv.get(`project:${projectId}`);
     const project = parseKvItem(data);
-    if (!project) return c.json({ error: 'Project not found' }, 404);
+    
+    if (!project) return c.json({ error: 'Projet introuvable', success: false }, 404);
     
     const isAdmin = user.isAdmin || false;
-    const creatorEmail = project.creatorEmail || '';
-    const isCreator = user.email.toLowerCase() === creatorEmail.toLowerCase();
+    const creatorEmail = (project.creatorEmail || '').toLowerCase().trim();
+    const userEmail = (user.email || '').toLowerCase().trim();
+    const isCreator = userEmail && creatorEmail && userEmail === creatorEmail;
     
-    console.log(`[SERVER] Deleting project ${c.req.param('id')}. isAdmin: ${isAdmin}, isCreator: ${isCreator}`);
+    console.log(`[SERVER] Deleting project ${projectId}. isAdmin: ${isAdmin}, isCreator: ${isCreator}`);
     
     if (!isAdmin && !isCreator) {
       return c.json({ error: 'Seul le créateur ou un admin peut supprimer ce projet', success: false }, 403);
     }
     
-    await kv.del(`project:${c.req.param('id')}`);
+    await kv.del(`project:${projectId}`);
     return c.json({ success: true });
-  } catch (error) {
-    return c.json({ error: 'Internal server error' }, 500);
+  } catch (error: any) {
+    console.error('[SERVER] Delete project error:', error);
+    return c.json({ error: 'Internal server error', details: error.message }, 500);
   }
 };
 app.delete("/projects/:id", deleteProjectHandler);
@@ -349,13 +356,22 @@ app.get(`${PREFIX}/ads`, getAdsHandler);
 
 const saveAdsHandler = async (c: any) => {
   try {
-    const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
+    const token = c.req.header('x-matchdraw-token') || c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
     const user = getUserFromToken(token);
-    if (!user || !user.isAdmin) return c.json({ error: 'Unauthorized' }, 401);
+    
+    console.log(`[SERVER] Save ADS attempt by ${user?.email || 'unknown'}. isAdmin: ${user?.isAdmin}`);
+    
+    if (!user || !user.isAdmin) {
+      return c.json({ error: 'Seul l\'administrateur peut modifier les publicités', success: false }, 401);
+    }
+    
     const body = await c.req.json();
     await kv.set('global:ads', JSON.stringify(body.ads));
     return c.json({ success: true });
-  } catch (error) { return c.json({ error: 'Internal server error' }, 500); }
+  } catch (error: any) { 
+    console.error('[SERVER] Save ADS error:', error);
+    return c.json({ error: 'Internal server error', details: error.message }, 500); 
+  }
 };
 app.post("/ads", saveAdsHandler);
 app.post(`${PREFIX}/ads`, saveAdsHandler);
@@ -405,7 +421,7 @@ app.post(`${PREFIX}/bug-report`, async (c) => {
 // Admin Analytics & Messages
 app.get(`${PREFIX}/admin/analytics`, async (c) => {
   try {
-    const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
+    const token = c.req.header('x-matchdraw-token') || c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
     const user = getUserFromToken(token);
     if (!user || !user.isAdmin) return c.json({ error: 'Unauthorized' }, 401);
     const visits = (await kv.getByPrefix('visit:')).map(parseKvItem).filter(Boolean);
@@ -417,7 +433,7 @@ app.get(`${PREFIX}/admin/analytics`, async (c) => {
 
 app.get(`${PREFIX}/admin/messages`, async (c) => {
   try {
-    const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
+    const token = c.req.header('x-matchdraw-token') || c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
     const user = getUserFromToken(token);
     if (!user || !user.isAdmin) return c.json({ error: 'Unauthorized' }, 401);
     const contacts = (await kv.getByPrefix('contact:')).map(parseKvItem).filter(Boolean);
