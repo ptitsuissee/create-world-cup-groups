@@ -16,7 +16,7 @@ app.use(
   "*",
   cors({
     origin: "*",
-    allowHeaders: ["Content-Type", "Authorization", "X-Admin-Token", "apikey"],
+    allowHeaders: ["Content-Type", "Authorization", "X-Admin-Token", "X-MatchDraw-Token", "apikey"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
     maxAge: 86400,
@@ -52,22 +52,34 @@ const parseKvItem = (data: any) => {
 
 // Utility to get user from token with basic verification
 const getUserFromToken = (token?: string) => {
-  if (!token) return null;
-  const parts = token.split(':');
-  if (parts.length < 3) return null;
+  if (!token) {
+    console.log('[AUTH] No token provided');
+    return null;
+  }
+  
+  // Clean token if it has Bearer prefix
+  const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
+  
+  const parts = cleanToken.split(':');
+  if (parts.length < 3) {
+    console.log('[AUTH] Invalid token format (need 3 parts)');
+    return null;
+  }
   
   const [type, email, timestamp] = parts;
   const ADMIN_EMAIL = "suppmatchdrawpro@outlook.com";
   
-  // Basic security: if it's an admin token, it MUST be the admin email
-  if (type === 'admin' && email.toLowerCase() !== ADMIN_EMAIL.toLowerCase() && email.toLowerCase() !== 'lessuisse') {
-    return null;
-  }
+  const isActuallyAdmin = type === 'admin' && (
+    email.toLowerCase() === ADMIN_EMAIL.toLowerCase() || 
+    email.toLowerCase() === 'lessuisse'
+  );
+  
+  console.log(`[AUTH] Parsed token: type=${type}, email=${email}, isAdmin=${isActuallyAdmin}`);
   
   return { 
     type, 
     email, 
-    isAdmin: type === 'admin' && (email.toLowerCase() === ADMIN_EMAIL.toLowerCase() || email.toLowerCase() === 'lessuisse')
+    isAdmin: isActuallyAdmin
   };
 };
 
@@ -184,10 +196,18 @@ const saveProjectHandler = async (c: any) => {
   try {
     const body = await c.req.json();
     const projectId = body.id || body.projectId || `project-${Date.now()}`;
-    const token = c.req.header('x-admin-token') || c.req.header('authorization')?.replace('Bearer ', '');
+    
+    // Try to get token from multiple sources
+    const token = 
+      c.req.header('x-matchdraw-token') || 
+      c.req.header('x-admin-token') || 
+      c.req.header('authorization')?.replace('Bearer ', '') ||
+      body.token;
+      
     const user = getUserFromToken(token);
     
-    console.log(`[SERVER] Save request for project ${projectId} by user: ${user?.email || 'anonymous'} (isAdmin: ${user?.isAdmin || false})`);
+    console.log(`[SERVER] SAVE project: ${projectId}`);
+    console.log(`[SERVER] Auth source: ${token ? 'provided' : 'none'}, user: ${user?.email || 'anon'}, admin: ${user?.isAdmin}`);
     
     // Check if project exists to verify permissions
     const existingData = await kv.get(`project:${projectId}`);
@@ -195,15 +215,23 @@ const saveProjectHandler = async (c: any) => {
     
     if (existingProject) {
       const isAdmin = user?.isAdmin || false;
-      const creatorEmail = existingProject.creatorEmail || '';
-      const isCreator = user && creatorEmail && user.email.toLowerCase() === creatorEmail.toLowerCase();
+      const creatorEmail = (existingProject.creatorEmail || '').toLowerCase().trim();
+      const userEmail = (user?.email || '').toLowerCase().trim();
+      const isCreator = userEmail && creatorEmail && userEmail === creatorEmail;
       
-      console.log(`[SERVER] Existing project found. Creator: ${creatorEmail}. IsAdmin: ${isAdmin}, IsCreator: ${isCreator}`);
+      console.log(`[SERVER] Permission Check - isAdmin: ${isAdmin}, isCreator: ${isCreator} (User:${userEmail} vs Creator:${creatorEmail})`);
       
       if (!isAdmin && !isCreator) {
-        console.warn(`[SERVER] Unauthorized save attempt for ${projectId} by ${user?.email}`);
-        return c.json({ error: 'Seul le créateur ou un admin peut modifier ce projet', success: false }, 403);
+        console.warn(`[SERVER] Permission DENIED for ${projectId}`);
+        return c.json({ 
+          error: 'Seul le créateur ou un admin peut modifier ce projet', 
+          details: `User: ${userEmail || 'anon'}, Project: ${projectId}`,
+          success: false 
+        }, 403);
       }
+      console.log(`[SERVER] Permission GRANTED`);
+    } else {
+      console.log(`[SERVER] Creating NEW project: ${projectId}`);
     }
     
     // Prepare data for saving
@@ -215,14 +243,13 @@ const saveProjectHandler = async (c: any) => {
       creatorEmail: body.creatorEmail || user?.email || existingProject?.creatorEmail
     };
     
-    // IMPORTANT: Always stringify for the KV store to ensure reliability
-    console.log(`[SERVER] Saving project ${projectId} to KV store...`);
+    // Save to KV store
     await kv.set(`project:${projectId}`, JSON.stringify(finalData));
     
-    console.log(`[SERVER] Project ${projectId} saved successfully`);
+    console.log(`[SERVER] Save SUCCESS: ${projectId}`);
     return c.json({ success: true, projectId });
   } catch (error: any) {
-    console.error('[SERVER] Save project error:', error);
+    console.error('[SERVER] CRITICAL SAVE ERROR:', error);
     return c.json({ 
       error: 'Erreur serveur lors de la sauvegarde', 
       details: error.message, 

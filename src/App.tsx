@@ -1006,8 +1006,7 @@ function App() {
       `project-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     const now = Date.now();
 
-    const existingProject = savedProjects.find((p) => p.id === projectId);
-
+    const userToken = localStorage.getItem("auth_token") || "";
     const projectData = {
       groups,
       unassignedCountries,
@@ -1032,13 +1031,12 @@ function App() {
 
     try {
       // Save project data to server
-      const token = localStorage.getItem("auth_token") || "";
       const response = await fetch(`${API_BASE}/projects`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token || publicAnonKey}`,
-          "X-Admin-Token": token,
+          "Authorization": `Bearer ${userToken || publicAnonKey}`,
+          "X-MatchDraw-Token": userToken,
         },
         body: JSON.stringify({
           id: projectId,
@@ -1051,7 +1049,7 @@ function App() {
           isFeatured: newProject.isFeatured,
           views: newProject.views,
           createdAt: newProject.createdAt,
-          token: token,
+          token: userToken, // Backwards compatibility for body token
         }),
       });
 
@@ -1059,7 +1057,7 @@ function App() {
       if (!response.ok) {
         console.error("[APP] Save failed response:", response.status, result);
         throw new Error(
-          result.error || result.details || "Erreur serveur"
+          result.error || result.details || "Erreur lors de la sauvegarde"
         );
       }
 
