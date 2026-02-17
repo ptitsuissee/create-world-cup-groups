@@ -58,27 +58,35 @@ const getUserFromToken = (token?: string) => {
   }
   
   // Clean token if it has Bearer prefix
-  const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
+  let cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
   
+  // If the token is very long and doesn't have colons, it's probably a Supabase JWT, ignore it
+  if (cleanToken.length > 100 && !cleanToken.includes(':')) {
+    console.log('[AUTH] Ignoring likely Supabase JWT');
+    return null;
+  }
+
   const parts = cleanToken.split(':');
-  if (parts.length < 3) {
-    console.log('[AUTH] Invalid token format (need 3 parts)');
+  if (parts.length < 2) { // Allow at least 2 parts (type:email) for flexibility
+    console.log('[AUTH] Invalid token format');
     return null;
   }
   
-  const [type, email, timestamp] = parts;
+  const type = parts[0];
+  const email = parts[1];
   const ADMIN_EMAIL = "suppmatchdrawpro@outlook.com";
   
-  const isActuallyAdmin = type === 'admin' && (
-    email.toLowerCase() === ADMIN_EMAIL.toLowerCase() || 
-    email.toLowerCase() === 'lessuisse'
-  );
+  // Robust admin check
+  const isActuallyAdmin = 
+    (type === 'admin') || 
+    (email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) || 
+    (email.toLowerCase() === 'lessuisse');
   
   console.log(`[AUTH] Parsed token: type=${type}, email=${email}, isAdmin=${isActuallyAdmin}`);
   
   return { 
     type, 
-    email, 
+    email: email.toLowerCase().trim(), 
     isAdmin: isActuallyAdmin
   };
 };
@@ -217,9 +225,12 @@ const saveProjectHandler = async (c: any) => {
       const isAdmin = user?.isAdmin || false;
       const creatorEmail = (existingProject.creatorEmail || '').toLowerCase().trim();
       const userEmail = (user?.email || '').toLowerCase().trim();
-      const isCreator = userEmail && creatorEmail && userEmail === creatorEmail;
       
-      console.log(`[SERVER] Permission Check - isAdmin: ${isAdmin}, isCreator: ${isCreator} (User:${userEmail} vs Creator:${creatorEmail})`);
+      // If project has no owner, let the first authenticated person claim it
+      // Otherwise, check if user is creator or admin
+      const isCreator = creatorEmail === '' || (userEmail && creatorEmail && userEmail === creatorEmail);
+      
+      console.log(`[SERVER] Permission Check - isAdmin: ${isAdmin}, isCreator: ${isCreator} (User:${userEmail} vs Creator:${creatorEmail || 'none'})`);
       
       if (!isAdmin && !isCreator) {
         console.warn(`[SERVER] Permission DENIED for ${projectId}`);

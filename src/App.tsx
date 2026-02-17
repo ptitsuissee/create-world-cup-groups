@@ -354,7 +354,9 @@ function App() {
     const avatar = localStorage.getItem('user_avatar');
     const isAdminStored = localStorage.getItem('is_admin') === 'true';
 
-    if (token && email) {
+    console.log("[APP] Auth mount check:", { hasToken: !!token, email, isAdmin: isAdminStored });
+
+    if (token && token !== "null" && token !== "undefined" && email) {
       setIsAuthenticated(true);
       setUserEmail(email);
       setUserName(name || email.split('@')[0]);
@@ -1003,12 +1005,17 @@ function App() {
   // Save project with name
   const handleSaveProjectWithName = async (projectName: string) => {
     try {
+      console.log("[APP] Starting save process for:", projectName);
       const projectId =
         currentProjectId ||
-        `project-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        `project-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
       const now = Date.now();
 
       const userToken = localStorage.getItem("auth_token") || "";
+      if (!userToken) {
+        throw new Error("Vous devez être connecté pour sauvegarder");
+      }
+
       const projectData = {
         groups,
         unassignedCountries,
@@ -1033,12 +1040,13 @@ function App() {
           unassignedCountries.length,
       };
 
+      console.log("[APP] Sending save request to server...");
       // Save project data to server
       const response = await fetch(`${API_BASE}/projects`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${userToken || publicAnonKey}`,
+          "Authorization": `Bearer ${userToken}`,
           "X-MatchDraw-Token": userToken,
         },
         body: JSON.stringify({
@@ -1056,21 +1064,43 @@ function App() {
         }),
       });
 
-      const result = await response.json();
+      let result;
+      const responseText = await response.text();
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        console.error("[APP] Server returned non-JSON:", responseText);
+        throw new Error(`Erreur serveur (${response.status}): ${responseText.slice(0, 100)}`);
+      }
+
       if (!response.ok) {
-        throw new Error(result.error || result.details || "Erreur sauvegarde");
+        console.error("[APP] Save error from server:", result);
+        throw new Error(result.error || result.details || `Erreur ${response.status}`);
       }
 
       localStorage.setItem(`matchdraw_project_${projectId}`, JSON.stringify(projectData));
-      await fetchProjects();
+      
+      // Update local projects list state immediately to show change
+      setSavedProjects(prev => {
+        const otherProjects = prev.filter(p => p.id !== projectId);
+        return [newProject, ...otherProjects];
+      });
+
       setCurrentProjectId(projectId);
       setCurrentProjectName(projectName.trim());
       setShowSaveProjectModal(false);
-      setToast({ message: t.projectSaved, type: "success" });
+      setToast({ message: t.projectSaved || "Projet sauvegardé !", type: "success" });
+      
+      // Refresh project list from server in background
+      fetchProjects(false);
+      
       trackInteraction("project_save", { projectId });
     } catch (error: any) {
-      console.error("[APP] Save error:", error);
-      setToast({ message: error.message || "Erreur de sauvegarde", type: "error" });
+      console.error("[APP] CRITICAL SAVE ERROR:", error);
+      setToast({ 
+        message: error.message || "Erreur critique lors de la sauvegarde", 
+        type: "error" 
+      });
     }
   };
 
