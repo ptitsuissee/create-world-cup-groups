@@ -1032,11 +1032,13 @@ function App() {
 
     try {
       // Save project data to server
+      const token = localStorage.getItem("auth_token") || "";
       const response = await fetch(`${API_BASE}/projects`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("auth_token") || publicAnonKey}`,
+          "Authorization": `Bearer ${token || publicAnonKey}`,
+          "X-Admin-Token": token,
         },
         body: JSON.stringify({
           id: projectId,
@@ -1049,15 +1051,15 @@ function App() {
           isFeatured: newProject.isFeatured,
           views: newProject.views,
           createdAt: newProject.createdAt,
-          token: localStorage.getItem("auth_token"),
+          token: token,
         }),
       });
 
       const result = await response.json();
       if (!response.ok) {
-        console.error("[APP] Save failed:", result);
+        console.error("[APP] Save failed response:", response.status, result);
         throw new Error(
-          result.error || result.details || "Failed to save project to server",
+          result.error || result.details || "Erreur serveur"
         );
       }
 
@@ -1393,9 +1395,9 @@ function App() {
           <BannerAd ads={ads} position="top" />
 
           {/* Header */}
-          <div className="relative text-center space-y-4 py-4 sm:py-8">
+          <div className="relative text-center space-y-4 py-4 sm:py-8 z-[100]">
             {/* Top Bar: Projects + Language + User */}
-            <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between gap-2">
+            <div className="absolute top-0 left-0 right-0 z-[110] flex items-center justify-between gap-2">
               {/* Left Side: Projects Button */}
               <button
                 onClick={() => setShowProjectsGallery(true)}
@@ -1408,7 +1410,7 @@ function App() {
               {/* Right Side: Auth/User + Language */}
               <div className="flex items-center gap-2">
                 {/* Language Selector */}
-                <div className="relative">
+                <div className="relative z-[100]">
                   <button
                     onClick={() =>
                       setShowLanguageMenu(!showLanguageMenu)
@@ -1422,7 +1424,7 @@ function App() {
                   </button>
 
                   {showLanguageMenu && (
-                    <div className="absolute top-full right-0 mt-2 bg-white/10 backdrop-blur-xl rounded-xl border border-white/25 shadow-2xl overflow-hidden z-50 min-w-[180px]">
+                    <div className="fixed sm:absolute right-4 sm:right-0 top-20 sm:top-full mt-2 w-[calc(100vw-32px)] sm:w-64 bg-indigo-900/95 backdrop-blur-2xl rounded-xl border border-white/25 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden z-[9999] min-w-[200px]">
                       {(
                         Object.keys(languageNames) as Language[]
                       ).map((lang) => (
@@ -1432,7 +1434,7 @@ function App() {
                             setLanguage(lang);
                             setShowLanguageMenu(false);
                           }}
-                          className={`w-full text-left px-4 py-2.5 hover:bg-white/20 transition-all text-sm font-bold ${
+                          className={`w-full text-left px-4 py-3 hover:bg-white/20 transition-all text-sm font-bold border-b border-white/5 last:border-0 ${
                             language === lang ? "bg-white/25 text-blue-300" : "text-white/80"
                           }`}
                         >

@@ -188,9 +188,9 @@ export function MatchesView({
     <div className="min-h-screen p-3 sm:p-6 relative">
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="relative space-y-4 py-2 sm:py-8">
+        <div className="relative space-y-4 py-2 sm:py-8 z-[100]">
           {/* Top Row: User Menu + Language Selector + Back Button */}
-          <div className="flex items-center justify-between gap-2 mb-4">
+          <div className="flex items-center justify-between gap-2 mb-4 z-[110]">
             <div className="flex gap-1 sm:gap-2">
               <button
                 onClick={onBackToSetup}
@@ -204,7 +204,7 @@ export function MatchesView({
 
             <div className="flex items-center gap-1 sm:gap-2">
               {/* Language Selector */}
-              <div className="relative">
+              <div className="relative z-[100]">
                 <button
                   onClick={() => setShowLanguageMenu(!showLanguageMenu)}
                   className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 bg-white/15 backdrop-blur-lg rounded-lg sm:rounded-xl border border-white/25 hover:bg-white/25 transition-all shadow-lg"
@@ -215,7 +215,7 @@ export function MatchesView({
                 </button>
 
                 {showLanguageMenu && (
-                  <div className="absolute top-full right-0 mt-2 bg-white/15 backdrop-blur-xl rounded-xl border border-white/25 shadow-2xl overflow-hidden z-50 min-w-[180px]">
+                  <div className="fixed sm:absolute right-4 sm:right-0 top-20 sm:top-full mt-2 w-[calc(100vw-32px)] sm:w-64 bg-indigo-900/95 backdrop-blur-2xl rounded-xl border border-white/25 shadow-[0_20_50px_rgba(0,0,0,0.5)] overflow-hidden z-[9999] min-w-[200px]">
                     {(Object.keys(languageNames) as Language[]).map((lang) => (
                       <button
                         key={lang}
@@ -223,8 +223,8 @@ export function MatchesView({
                           onLanguageChange(lang);
                           setShowLanguageMenu(false);
                         }}
-                        className={`w-full text-left px-4 py-2.5 hover:bg-white/20 transition-all text-sm ${
-                          language === lang ? 'bg-white/25' : ''
+                        className={`w-full text-left px-4 py-3 hover:bg-white/20 transition-all text-sm font-bold border-b border-white/5 last:border-0 ${
+                          language === lang ? 'bg-white/25 text-blue-300' : 'text-white/80'
                         }`}
                       >
                         {languageNames[lang]}

@@ -91,7 +91,7 @@ export function UserMenu({
   };
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative z-[100]" ref={menuRef}>
       {/* User button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -116,7 +116,7 @@ export function UserMenu({
 
       {/* Dropdown menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white/10 backdrop-blur-xl rounded-xl border border-white/20 shadow-2xl overflow-hidden z-50">
+        <div className="fixed sm:absolute right-4 sm:right-0 top-20 sm:top-full mt-2 w-[calc(100vw-32px)] sm:w-64 bg-indigo-900/95 backdrop-blur-2xl rounded-xl border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden z-[9999] animate-in fade-in zoom-in-95 duration-200">
           {/* User info */}
           <div className="p-4 border-b border-white/10">
             <div className="flex items-center gap-3">

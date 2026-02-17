@@ -18,7 +18,7 @@ export function BannerAd({ ads, position }: BannerAdProps) {
   if (!bannerAd) {
     // If no ad is set, show a placeholder that is visible as per request
     return (
-      <div className="w-full max-w-7xl mx-auto my-6 px-4">
+      <div className="w-full max-w-7xl mx-auto my-6 px-4 relative z-10">
         <div className="relative bg-white/5 backdrop-blur-md rounded-2xl border-2 border-dashed border-white/20 p-8 flex flex-col items-center justify-center text-center group hover:border-blue-400/50 transition-all duration-300">
           <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
             <span className="text-3xl">📢</span>
