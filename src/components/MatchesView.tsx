@@ -325,6 +325,7 @@ export function MatchesView({
             messages={infoMessages}
             onMessagesChange={onInfoMessagesChange}
             translations={t}
+            isReadOnly={isReadOnly}
           />
         </div>
 

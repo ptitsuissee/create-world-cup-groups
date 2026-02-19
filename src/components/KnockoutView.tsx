@@ -32,6 +32,7 @@ interface KnockoutViewProps {
   onOpenAdManager?: () => void;
   onOpenMessages?: () => void;
   ads?: AdItem[];
+  isReadOnly?: boolean;
 }
 
 export function KnockoutView({
@@ -54,6 +55,7 @@ export function KnockoutView({
   onOpenAdManager,
   onOpenMessages,
   ads,
+  isReadOnly,
 }: KnockoutViewProps) {
   const [showSettingsModal, setShowSettingsModal] = useState(knockoutMatches.length === 0);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' | 'error' } | null>(null);
@@ -216,6 +218,7 @@ export function KnockoutView({
             messages={infoMessages}
             onMessagesChange={onInfoMessagesChange}
             translations={t}
+            isReadOnly={isReadOnly}
           />
         </div>
 

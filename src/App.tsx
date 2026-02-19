@@ -120,6 +120,7 @@ const STORAGE_KEY_MATCHES = "matchdraw_matches";
 const STORAGE_KEY_TOURNAMENT_SETTINGS =
   "matchdraw_tournament_settings";
 const STORAGE_KEY_INFO_MESSAGES = "matchdraw_info_messages";
+const STORAGE_KEY_KNOCKOUT_INFO_MESSAGES = "matchdraw_knockout_info_messages";
 
 function App() {
   const [currentView, setCurrentView] = useState<
@@ -478,6 +479,9 @@ function App() {
       const savedInfoMessages = localStorage.getItem(
         STORAGE_KEY_INFO_MESSAGES,
       );
+      const savedKnockoutInfoMessages = localStorage.getItem(
+        STORAGE_KEY_KNOCKOUT_INFO_MESSAGES,
+      );
 
       if (savedGroups) {
         setGroups(JSON.parse(savedGroups));
@@ -498,6 +502,9 @@ function App() {
       }
       if (savedInfoMessages) {
         setInfoMessages(JSON.parse(savedInfoMessages));
+      }
+      if (savedKnockoutInfoMessages) {
+        setKnockoutInfoMessages(JSON.parse(savedKnockoutInfoMessages));
       }
     } catch (error) {
       console.error("Error loading from localStorage:", error);
@@ -528,6 +535,10 @@ function App() {
         STORAGE_KEY_INFO_MESSAGES,
         JSON.stringify(infoMessages),
       );
+      localStorage.setItem(
+        STORAGE_KEY_KNOCKOUT_INFO_MESSAGES,
+        JSON.stringify(knockoutInfoMessages),
+      );
     } catch (error) {
       console.error("Error saving to localStorage:", error);
     }
@@ -538,6 +549,7 @@ function App() {
     matches,
     tournamentSettings,
     infoMessages,
+    knockoutInfoMessages,
   ]);
 
   const handleAddGroup = (e: React.FormEvent) => {
@@ -1021,6 +1033,8 @@ function App() {
         unassignedCountries,
         matches,
         knockoutMatches,
+        infoMessages,
+        knockoutInfoMessages,
       };
 
       const existingProject = savedProjects.find((p) => p.id === projectId);
@@ -1136,6 +1150,8 @@ function App() {
             unassignedCountries: result.project.unassignedCountries,
             matches: result.project.matches,
             knockoutMatches: result.project.knockoutMatches,
+            infoMessages: result.project.infoMessages || [],
+            knockoutInfoMessages: result.project.knockoutInfoMessages || [],
           };
           projectMeta = result.project;
         } else {
@@ -1154,6 +1170,8 @@ function App() {
       setUnassignedCountries(data.unassignedCountries || []);
       setMatches(data.matches || []);
       setKnockoutMatches(data.knockoutMatches || []);
+      setInfoMessages(data.infoMessages || []);
+      setKnockoutInfoMessages(data.knockoutInfoMessages || []);
       
       setCurrentProjectId(projectId);
       if (currentView !== 'setup') setCurrentView('setup');
@@ -1333,6 +1351,7 @@ function App() {
             onOpenAdManager={() => setShowAdManagerModal(true)}
             onOpenMessages={() => setShowAdminMessagesPanel(true)}
             ads={ads}
+            isReadOnly={isReadOnly}
           />
           <BannerAd ads={ads} position="bottom" />
         </div>
@@ -1368,6 +1387,7 @@ function App() {
             onOpenAdManager={() => setShowAdManagerModal(true)}
             onOpenMessages={() => setShowAdminMessagesPanel(true)}
             ads={ads}
+            isReadOnly={isReadOnly}
           />
           <BannerAd ads={ads} position="bottom" />
         </div>

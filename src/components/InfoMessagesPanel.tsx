@@ -7,12 +7,14 @@ interface InfoMessagesPanelProps {
   messages: InfoMessage[];
   onMessagesChange: (messages: InfoMessage[]) => void;
   translations: Translations;
+  isReadOnly?: boolean;
 }
 
 export function InfoMessagesPanel({
   messages,
   onMessagesChange,
   translations,
+  isReadOnly = false,
 }: InfoMessagesPanelProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingMessage, setEditingMessage] = useState<InfoMessage | null>(null);
@@ -31,6 +33,10 @@ export function InfoMessagesPanel({
     onMessagesChange(messages.filter(m => m.id !== id));
   };
 
+  if (isReadOnly && messages.length === 0) {
+    return null;
+  }
+
   return (
     <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
       <div className="flex items-center justify-between mb-4">
@@ -40,13 +46,15 @@ export function InfoMessagesPanel({
           </div>
           <h2 className="text-2xl">{translations.infoMessages}</h2>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-gradient-to-r from-cyan-400 to-blue-500 hover:shadow-lg hover:scale-105 active:scale-95 rounded-lg transition-all flex items-center gap-2 text-sm"
-        >
-          <Plus size={16} />
-          <span>{translations.addInfoMessage}</span>
-        </button>
+        {!isReadOnly && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-gradient-to-r from-cyan-400 to-blue-500 hover:shadow-lg hover:scale-105 active:scale-95 rounded-lg transition-all flex items-center gap-2 text-sm"
+          >
+            <Plus size={16} />
+            <span>{translations.addInfoMessage}</span>
+          </button>
+        )}
       </div>
 
       {messages.length === 0 ? (
@@ -63,13 +71,14 @@ export function InfoMessagesPanel({
               onEdit={() => setEditingMessage(message)}
               onDelete={() => handleDeleteMessage(message.id)}
               translations={translations}
+              isReadOnly={isReadOnly}
             />
           ))}
         </div>
       )}
 
       {/* Add/Edit Modal */}
-      {(showAddModal || editingMessage) && (
+      {!isReadOnly && (showAddModal || editingMessage) && (
         <MessageModal
           message={editingMessage}
           onConfirm={editingMessage ? handleEditMessage : handleAddMessage}
@@ -89,11 +98,13 @@ function MessageCard({
   onEdit,
   onDelete,
   translations,
+  isReadOnly,
 }: {
   message: InfoMessage;
   onEdit: () => void;
   onDelete: () => void;
   translations: Translations;
+  isReadOnly: boolean;
 }) {
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all">
@@ -111,8 +122,8 @@ function MessageCard({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg mb-1">{message.title}</h3>
-          <p className="text-sm text-white/70 mb-2">{message.content}</p>
+          <h3 className="text-lg mb-1 font-bold text-white">{message.title}</h3>
+          <p className="text-sm text-white/90 mb-2 leading-relaxed">{message.content}</p>
           
           {message.link && message.linkName && (
             <a
@@ -128,20 +139,22 @@ function MessageCard({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 flex-shrink-0">
-          <button
-            onClick={onEdit}
-            className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all"
-          >
-            <Edit2 size={16} />
-          </button>
-          <button
-            onClick={onDelete}
-            className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-all"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
+        {!isReadOnly && (
+          <div className="flex gap-2 flex-shrink-0">
+            <button
+              onClick={onEdit}
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all"
+            >
+              <Edit2 size={16} />
+            </button>
+            <button
+              onClick={onDelete}
+              className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-all"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
